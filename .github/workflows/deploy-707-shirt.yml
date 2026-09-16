@@ -1,0 +1,37 @@
+name: Deploy 707 Shirt Tool to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '707-shirt/**'
+      - '.github/workflows/deploy-707-shirt.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-707-shirt
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload 707 shirt site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./707-shirt
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
