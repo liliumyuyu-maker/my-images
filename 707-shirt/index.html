@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#143a6d">
+<title>707 班服管理台</title>
+<style>
+:root{--navy:#143a6d;--blue:#2e69a8;--sky:#eef6ff;--ink:#203047;--muted:#6a7789;--line:#d8e3ef;--bg:#f5f8fc;--white:#fff;--green:#16745a;--red:#b84646;--amber:#a96a18;--shadow:0 8px 24px rgba(20,58,109,.08)}
+*{box-sizing:border-box}html{font-size:16px}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif}
+button,input,select{font:inherit}button{cursor:pointer} .app{max-width:1100px;margin:auto;padding:12px 12px 80px}
+.hero{background:linear-gradient(145deg,#0e2a50,#164a82 58%,#5d95cf);color:#fff;padding:20px;border-radius:20px;box-shadow:var(--shadow)}
+.hero h1{margin:0 0 6px;font-size:27px}.hero p{margin:0;opacity:.9;font-size:14px;line-height:1.55}
+.pills{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}.pill{font-size:12px;padding:6px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.12)}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:var(--shadow)}.stat small{color:var(--muted)}.stat b{display:block;font-size:21px;margin-top:4px;color:var(--navy)}.stat.ok{background:#f3fff9;border-color:#a8d8c8}
+.tabs{display:flex;gap:8px;overflow:auto;position:sticky;top:0;z-index:20;padding:8px 0;background:rgba(245,248,252,.95);backdrop-filter:blur(8px)}.tabbtn{white-space:nowrap;border:1px solid var(--line);background:#fff;color:var(--navy);font-weight:800;border-radius:11px;padding:10px 13px;min-height:44px}.tabbtn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.tab{display:none}.tab.active{display:block}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;margin:10px 0;box-shadow:var(--shadow)}.card h2{font-size:20px;color:var(--navy);margin:0 0 10px}.note{padding:10px 12px;border-left:4px solid #78a7d6;border-radius:9px;background:#f1f7fd;color:#40546d;font-size:13px;line-height:1.55}.note.good{border-left-color:#68aa91;background:#f2fbf7}.note.warn{border-left-color:#e0a052;background:#fff8ed}
+.btn{border:0;border-radius:10px;min-height:44px;padding:9px 13px;font-weight:800;background:var(--navy);color:#fff}.btn.secondary{background:#edf3fa;color:var(--navy);border:1px solid #cfdeed}.btn.green{background:var(--green)}.btn.red{background:var(--red)}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.student{background:#fff;border:1px solid var(--line);border-radius:15px;margin:9px 0;overflow:hidden}.student summary{list-style:none;display:grid;grid-template-columns:44px 1fr auto;gap:9px;align-items:center;padding:12px;cursor:pointer}.student summary::-webkit-details-marker{display:none}.seat{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#eaf2fb;color:var(--navy);font-weight:900}.name{font-weight:900;color:var(--navy)}.meta{font-size:12px;color:var(--muted);margin-top:3px}.money{font-weight:900;color:#244d7f;text-align:right}.body{border-top:1px solid #edf1f6;padding:12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.grid .wide{grid-column:1/-1}label span{display:block;color:var(--muted);font-size:12px;margin:0 0 4px}input,select{width:100%;min-height:44px;padding:8px;border:1px solid #cbd8e7;border-radius:9px;background:#fff;color:var(--ink);font-size:16px}
+.extra{margin-top:10px;padding:10px;border-radius:12px;background:#f7faff;border:1px solid #dce7f2}.extrahead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}.badge{display:inline-block;font-size:12px;padding:3px 7px;border-radius:999px;background:#eaf2fb;color:#31598c;font-weight:800}
+.teacherrow{padding:10px 0;border-bottom:1px solid #edf1f6}.teacherrow:last-child{border:0}.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}.kpi{padding:12px;background:#f6f9fd;border:1px solid #e0e8f2;border-radius:12px}.kpi b{display:block;color:var(--navy);font-size:20px;margin-top:3px}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px}table{border-collapse:collapse;width:100%;min-width:620px}th,td{padding:9px;border-bottom:1px solid #e9eef5;text-align:left;font-size:13px}th{background:#eef4fb;color:#244b78;position:sticky;top:0}
+.sharebox{padding:13px;border-radius:13px;background:linear-gradient(135deg,#eef6ff,#f8fbff);border:1px solid #cddded}.sharebox code{display:block;word-break:break-all;background:#fff;padding:9px;border-radius:8px;border:1px solid #d9e3ef;font-size:11px;margin:8px 0}
+footer{font-size:11px;color:var(--muted);text-align:center;padding:20px 8px}
+@media(min-width:800px){.stats{grid-template-columns:repeat(5,1fr)}.grid{grid-template-columns:repeat(4,1fr)}.grid .wide{grid-column:auto}.app{padding-top:22px}}
+</style>
+</head>
+<body>
+<div class="app">
+<section class="hero">
+<h1>707 班服管理台</h1>
+<p>老師專用。資料只存在這台裝置的瀏覽器；家長分享網址只帶匿名統計，不含姓名、座號或個別身高體重。</p>
+<div class="pills"><span class="pill">學生 22 人 × 基本 1 件</span><span class="pill">基本件 407 元（452−45）</span><span class="pill">加購 452 元 / 件</span><span class="pill">優惠門檻已達</span><span class="pill">老師固定 2 件</span></div>
+</section>
+
+<section class="stats">
+<div class="stat ok"><small>目前已輸入總件數</small><b id="stPieces">24</b><small>實際優惠門檻已確認達成</small></div>
+<div class="stat"><small>學生基本件</small><b id="stBase">22</b></div>
+<div class="stat"><small>家庭額外加購</small><b id="stExtra">0</b></div>
+<div class="stat"><small>老師另購</small><b id="stTeacher">2</b></div>
+<div class="stat"><small>目前試算總額</small><b id="stTotal">$0</b></div>
+</section>
+
+<nav class="tabs">
+<button class="tabbtn active" data-tab="orders">訂購 / 量套</button>
+<button class="tabbtn" data-tab="summary">統計 / 金額</button>
+<button class="tabbtn" data-tab="sizes">匿名尺寸參考</button>
+<button class="tabbtn" data-tab="share">家長分享</button>
+<button class="tabbtn" data-tab="backup">備份 / 匯入</button>
+</nav>
+
+<section id="orders" class="tab active">
+<div class="card">
+<h2>學生訂購與量套</h2>
+<div class="note good">每位學生的第一件固定以 407 元計；本人第二件、爸爸、媽媽、弟弟、妹妹或其他家人的加購皆以 452 元 / 件計。</div>
+<div id="students"></div>
+</div>
+<div class="card">
+<h2>老師自行購買</h2>
+<p class="note">目前固定保留「老師的小孩 1 件」與「老師的先生 1 件」。</p>
+<div id="teachers"></div>
+</div>
+</section>
+
+<section id="summary" class="tab">
+<div class="card">
+<h2>總覽</h2>
+<div class="kpis">
+<div class="kpi"><small>學生基本件</small><b id="mBase">$0</b></div>
+<div class="kpi"><small>家庭額外加購</small><b id="mExtra">$0</b></div>
+<div class="kpi"><small>老師 2 件</small><b id="mTeacher">$0</b></div>
+<div class="kpi"><small>全部合計</small><b id="mTotal">$0</b></div>
+</div>
+</div>
+<div class="card"><h2>尺寸件數</h2><div class="tablewrap"><table><thead><tr><th>尺寸</th><th>學生基本</th><th>家庭加購</th><th>老師</th><th>合計</th></tr></thead><tbody id="sizeBody"></tbody></table></div></div>
+<div class="card"><h2>每位學生家庭應收</h2><div class="tablewrap"><table><thead><tr><th>座號</th><th>姓名</th><th>基本件</th><th>加購件</th><th>應收</th></tr></thead><tbody id="moneyBody"></tbody></table></div></div>
+</section>
+
+<section id="sizes" class="tab">
+<div class="card">
+<h2>班內匿名實穿參考</h2>
+<div class="note warn">不建立未經證實的「官方尺寸表」。只有真的填入身高、體重、量套尺寸與合身 / 寬鬆後，才彙整班內觀察範圍。</div>
+<div class="tablewrap" style="margin-top:10px"><table><thead><tr><th>尺寸</th><th>樣本數</th><th>身高觀察範圍</th><th>體重觀察範圍</th><th>實穿感受</th></tr></thead><tbody id="refBody"></tbody></table></div>
+</div>
+</section>
+
+<section id="share" class="tab">
+<div class="card">
+<h2>給家長看的方式</h2>
+<div class="note good">不用讓家長進老師管理台。按下面按鈕後，系統會把目前的「匿名尺寸統計」包進一個家長專用網址；家長只看得到匿名範圍與尺寸建議工具，看不到姓名、座號、每位學生個別資料或班級收款明細。</div>
+<div class="sharebox" style="margin-top:12px">
+<button class="btn green" onclick="makeParentLink()">產生 / 更新家長分享網址</button>
+<code id="parentUrl">尚未產生</code>
+<div class="toolbar"><button class="btn secondary" onclick="copyParentLink()">複製網址</button><button class="btn secondary" onclick="openParentLink()">先自己預覽</button></div>
+<small>每次量套資料更新後，重新按一次「產生 / 更新」再貼給家長即可。</small>
+</div>
+</div>
+</section>
+
+<section id="backup" class="tab">
+<div class="card">
+<h2>名冊 / 健康中心資料匯入</h2>
+<div class="note">CSV 欄位可用：座號、姓名、身高、體重、學生尺寸、量套感受。匯入只寫進這台裝置。</div>
+<div class="toolbar"><button class="btn secondary" onclick="downloadTemplate()">下載 CSV 範本</button><label class="btn secondary">匯入 CSV<input id="csvFile" type="file" accept=".csv,.tsv,.txt" hidden></label></div>
+</div>
+<div class="card">
+<h2>完整備份</h2>
+<div class="toolbar"><button class="btn" onclick="exportJSON()">下載 JSON 備份</button><label class="btn secondary">匯入 JSON<input id="jsonFile" type="file" accept=".json" hidden></label><button class="btn secondary" onclick="exportCSV()">下載訂購明細 CSV</button></div>
+</div>
+</section>
+
+<footer>707 班服管理台 · 本頁不需登入；個人資料只儲存在目前瀏覽器 localStorage。重要時點請下載 JSON 備份。</footer>
+</div>
+
+<script>
+const UNIT=452, DISCOUNT=45, BASE=UNIT-DISCOUNT, N=22, KEY='hsinke707_shirt_v2';
+const SIZES=['XS','S','M','L','XL','2L','3L','4L','5L','其他'];
+const FITS=['','合身','寬鬆'];
+const RELS=['本人加購','爸爸','媽媽','弟弟','妹妹','其他家人'];
+const uid=()=>Math.random().toString(36).slice(2)+Date.now().toString(36);
+function blankStudent(i){return {no:String(i).padStart(2,'0'),name:'',height:'',weight:'',size:'',fit:'',extras:[]}}
+function defaults(){return {students:Array.from({length:N},(_,i)=>blankStudent(i+1)),teachers:[{id:uid(),label:'老師的小孩',size:'',fit:'',qty:1},{id:uid(),label:'老師的先生',size:'',fit:'',qty:1}]}}
+function load(){try{const x=JSON.parse(localStorage.getItem(KEY));if(x?.students)return x}catch{}return defaults()}
+let state=load(); while(state.students.length<N)state.students.push(blankStudent(state.students.length+1)); state.students=state.students.slice(0,N);
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const money=n=>'$'+Math.round(+n||0).toLocaleString('zh-TW');
+const opt=(arr,val)=>'<option value=""></option>'+arr.filter(x=>x!=='').map(x=>`<option ${x===val?'selected':''}>${esc(x)}</option>`).join('');
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function extraCount(s){return s.extras.reduce((a,e)=>a+(+e.qty||0),0)}
+function studentTotal(s){return BASE+extraCount(s)*UNIT}
+function counts(){const extra=state.students.reduce((a,s)=>a+extraCount(s),0),teacher=state.teachers.reduce((a,e)=>a+(+e.qty||0),0);return {base:N,extra,teacher,total:N+extra+teacher}}
+function render(){renderStudents();renderTeachers();renderStats();renderSummary();renderRefs();save()}
+function renderStudents(){const box=document.getElementById('students');box.innerHTML=state.students.map((s,i)=>`<details class="student" id="s${i}"><summary><div class="seat">${esc(s.no)}</div><div><div class="name">${esc(s.name||'尚未填姓名')}</div><div class="meta">${[s.size?'尺寸 '+s.size:'未選尺寸',s.fit||'',extraCount(s)?'加購 '+extraCount(s)+' 件':''].filter(Boolean).join(' · ')}</div></div><div class="money">${money(studentTotal(s))}</div></summary><div class="body"><div class="grid"><label><span>姓名</span><input value="${esc(s.name)}" onchange="setS(${i},'name',this.value)"></label><label><span>座號</span><input value="${esc(s.no)}" onchange="setS(${i},'no',this.value)"></label><label><span>身高 cm</span><input type="number" inputmode="decimal" step=".1" value="${esc(s.height)}" onchange="setS(${i},'height',this.value)"></label><label><span>體重 kg</span><input type="number" inputmode="decimal" step=".1" value="${esc(s.weight)}" onchange="setS(${i},'weight',this.value)"></label><label><span>學生尺寸</span><select onchange="setS(${i},'size',this.value)">${opt(SIZES,s.size)}</select></label><label><span>量套感受</span><select onchange="setS(${i},'fit',this.value)">${opt(FITS,s.fit)}</select></label></div><div style="margin-top:12px"><b>額外加購</b> <span class="badge">${extraCount(s)} 件</span></div>${s.extras.map((e,j)=>extraHtml(i,j,e)).join('')}<div class="toolbar"><button class="btn secondary" onclick="event.preventDefault();addExtra(${i})">＋ 本人 / 家人加購</button></div></div></details>`).join('')}
+function extraHtml(i,j,e){return `<div class="extra"><div class="extrahead"><b>${esc(e.relation||'加購')}</b><button class="btn red" style="min-height:36px;padding:6px 9px" onclick="event.preventDefault();delExtra(${i},${j})">刪除</button></div><div class="grid"><label><span>關係</span><select onchange="setE(${i},${j},'relation',this.value)">${opt(RELS,e.relation)}</select></label><label><span>稱呼（可空白）</span><input value="${esc(e.label||'')}" onchange="setE(${i},${j},'label',this.value)"></label><label><span>尺寸</span><select onchange="setE(${i},${j},'size',this.value)">${opt(SIZES,e.size)}</select></label><label><span>合身度</span><select onchange="setE(${i},${j},'fit',this.value)">${opt(FITS,e.fit)}</select></label><label><span>件數</span><input type="number" min="1" inputmode="numeric" value="${e.qty||1}" onchange="setE(${i},${j},'qty',this.value)"></label></div></div>`}
+function reopen(i){setTimeout(()=>{const d=document.getElementById('s'+i);if(d)d.open=true},0)}function setS(i,k,v){state.students[i][k]=v;render();reopen(i)}function setE(i,j,k,v){state.students[i].extras[j][k]=v;render();reopen(i)}function addExtra(i){state.students[i].extras.push({id:uid(),relation:'本人加購',label:'',size:'',fit:'',qty:1});render();reopen(i)}function delExtra(i,j){state.students[i].extras.splice(j,1);render();reopen(i)}
+function renderTeachers(){document.getElementById('teachers').innerHTML=state.teachers.map((e,i)=>`<div class="teacherrow"><div class="grid"><label><span>對象</span><input value="${esc(e.label)}" onchange="state.teachers[${i}].label=this.value;render()"></label><label><span>尺寸</span><select onchange="state.teachers[${i}].size=this.value;render()">${opt(SIZES,e.size)}</select></label><label><span>合身度</span><select onchange="state.teachers[${i}].fit=this.value;render()">${opt(FITS,e.fit)}</select></label><label><span>件數</span><input type="number" min="1" value="${e.qty}" onchange="state.teachers[${i}].qty=this.value;render()"></label></div></div>`).join('')}
+function renderStats(){const c=counts(),total=N*BASE+(c.extra+c.teacher)*UNIT;stPieces.textContent=c.total;stBase.textContent=N;stExtra.textContent=c.extra;stTeacher.textContent=c.teacher;stTotal.textContent=money(total)}
+function renderSummary(){const c=counts(),bm=N*BASE,em=c.extra*UNIT,tm=c.teacher*UNIT;mBase.textContent=money(bm);mExtra.textContent=money(em);mTeacher.textContent=money(tm);mTotal.textContent=money(bm+em+tm);const m={};SIZES.forEach(x=>m[x]={b:0,e:0,t:0});state.students.forEach(s=>{if(s.size)(m[s.size]??={b:0,e:0,t:0}).b++;s.extras.forEach(e=>{if(e.size)(m[e.size]??={b:0,e:0,t:0}).e+=(+e.qty||0)})});state.teachers.forEach(e=>{if(e.size)(m[e.size]??={b:0,e:0,t:0}).t+=(+e.qty||0)});const used=Object.entries(m).filter(([_,v])=>v.b+v.e+v.t);sizeBody.innerHTML=used.length?used.map(([sz,v])=>`<tr><td><b>${sz}</b></td><td>${v.b}</td><td>${v.e}</td><td>${v.t}</td><td><b>${v.b+v.e+v.t}</b></td></tr>`).join(''):'<tr><td colspan="5">尚未登記尺寸</td></tr>';moneyBody.innerHTML=state.students.map(s=>`<tr><td>${esc(s.no)}</td><td>${esc(s.name)}</td><td>${money(BASE)}</td><td>${extraCount(s)}</td><td><b>${money(studentTotal(s))}</b></td></tr>`).join('')}
+function aggregate(){const groups={};state.students.forEach(s=>{if(+s.height>0&&+s.weight>0&&s.size){const g=groups[s.size]??={size:s.size,n:0,hs:[],ws:[],fits:{}};g.n++;g.hs.push(+s.height);g.ws.push(+s.weight);g.fits[s.fit||'未填']=(g.fits[s.fit||'未填']||0)+1}});return Object.values(groups).map(g=>({size:g.size,n:g.n,hmin:Math.min(...g.hs),hmax:Math.max(...g.hs),havg:+(g.hs.reduce((a,b)=>a+b,0)/g.n).toFixed(1),wmin:Math.min(...g.ws),wmax:Math.max(...g.ws),wavg:+(g.ws.reduce((a,b)=>a+b,0)/g.n).toFixed(1),fits:g.fits}))}
+function renderRefs(){const a=aggregate();refBody.innerHTML=a.length?a.map(g=>`<tr><td><b>${g.size}</b></td><td>${g.n}</td><td>${g.hmin}–${g.hmax} cm</td><td>${g.wmin}–${g.wmax} kg</td><td>${Object.entries(g.fits).map(([k,v])=>`${k} ${v}`).join('、')}</td></tr>`).join(''):'<tr><td colspan="5">尚未累積完整的身高＋體重＋尺寸紀錄。</td></tr>'}
+function b64u(obj){const s=unescape(encodeURIComponent(JSON.stringify(obj)));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function makeParentLink(){const payload={v:1,updated:new Date().toISOString(),unit:UNIT,groups:aggregate()};const base=location.href.replace(/index\.html.*$/,'parent.html').replace(/[?#].*$/,'');const u=base+'#d='+b64u(payload);parentUrl.textContent=u;parentUrl.dataset.url=u;return u}async function copyParentLink(){const u=parentUrl.dataset.url||makeParentLink();try{await navigator.clipboard.writeText(u);alert('家長分享網址已複製。')}catch{prompt('請長按複製：',u)}}function openParentLink(){const u=parentUrl.dataset.url||makeParentLink();window.open(u,'_blank')}
+function csvEsc(v){v=String(v??'');return /[",\n]/.test(v)?`"${v.replace(/"/g,'""')}"`:v}function download(name,text,type='text/plain;charset=utf-8'){const a=document.createElement('a'),blob=new Blob([text],{type});a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}function downloadTemplate(){download('707學生量套範本.csv','\uFEFF座號,姓名,身高,體重,學生尺寸,量套感受\n01,王小明,158,48,M,合身\n02,陳小華,164,55,L,寬鬆','text/csv;charset=utf-8')}
+function parse(text){text=text.replace(/^\uFEFF/,'').trim();const lines=text.split(/\r?\n/),d=lines[0].includes('\t')?'\t':',';const head=lines.shift().split(d).map(x=>x.trim());return lines.filter(Boolean).map(line=>{const cols=line.split(d).map(x=>x.replace(/^"|"$/g,'').trim());return Object.fromEntries(head.map((h,i)=>[h,cols[i]||'']))})}
+csvFile.addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;const rows=parse(await f.text());rows.forEach(r=>{const no=String(r['座號']||'').replace(/^0+/,'');const s=state.students.find(x=>String(x.no).replace(/^0+/,'')===no);if(s){s.name=r['姓名']||s.name;s.height=r['身高']||s.height;s.weight=r['體重']||s.weight;s.size=r['學生尺寸']||s.size;s.fit=r['量套感受']||s.fit}});render();alert('學生資料已匯入。')})
+function exportJSON(){download('707班服完整備份.json',JSON.stringify(state,null,2),'application/json')}jsonFile.addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{const x=JSON.parse(await f.text());if(!x.students)throw 0;state=x;render();alert('備份已匯入。')}catch{alert('不是有效的班服備份檔。')}})
+function exportCSV(){const rows=[['類型','座號','姓名或稱呼','關係','尺寸','合身度','件數','單價','折扣','小計']];state.students.forEach(s=>{rows.push(['學生基本',s.no,s.name,'學生本人',s.size,s.fit,1,UNIT,DISCOUNT,BASE]);s.extras.forEach(e=>rows.push(['家庭加購',s.no,e.label||s.name,e.relation,e.size,e.fit,e.qty,UNIT,0,(+e.qty||0)*UNIT]))});state.teachers.forEach(e=>rows.push(['老師加購','',e.label,'老師',e.size,e.fit,e.qty,UNIT,0,(+e.qty||0)*UNIT]));download('707班服訂購明細.csv','\uFEFF'+rows.map(r=>r.map(csvEsc).join(',')).join('\n'),'text/csv;charset=utf-8')}
+document.querySelectorAll('.tabbtn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabbtn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(b.dataset.tab).classList.add('active')});render()
+</script>
+</body></html>
