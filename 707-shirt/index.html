@@ -29,7 +29,7 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:20px 8px}
 <section class="hero">
 <h1>707 班服管理台</h1>
 <p>老師專用。資料只存在這台裝置的瀏覽器；家長專屬網址只看得到「自己孩子的訂購與金額」＋「廠商官方尺寸表」＋「全班匿名尺寸參考」。</p>
-<div class="pills"><span class="pill">學生 22 人 × 基本 1 件</span><span class="pill">基本件 407 元（452−45）</span><span class="pill">加購 452 元 / 件</span><span class="pill">優惠門檻已達</span><span class="pill">老師固定 2 件</span></div>
+<div class="pills"><span class="pill">學生 22 人 × 基本 1 件</span><span class="pill">基本件 387 元（432−45）</span><span class="pill">加購 432 元 / 件</span><span class="pill">50 件優惠價已達</span><span class="pill">老師固定 2 件</span></div>
 </section>
 
 <section class="stats">
@@ -51,7 +51,7 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:20px 8px}
 <section id="orders" class="tab active">
 <div class="card">
 <h2>學生訂購與量套</h2>
-<div class="note good">每位學生的第一件固定以 407 元計；本人第二件、爸爸、媽媽、弟弟、妹妹或其他家人的加購皆以 452 元 / 件計。</div>
+<div class="note good">每位學生的第一件固定以 387 元計；本人第二件、爸爸、媽媽、弟弟、妹妹或其他家人的加購皆以 432 元 / 件計。</div>
 <div id="students"></div>
 </div>
 <div class="card">
@@ -122,7 +122,7 @@ footer{font-size:11px;color:var(--muted);text-align:center;padding:20px 8px}
 </div>
 
 <script>
-const UNIT=452, DISCOUNT=45, BASE=UNIT-DISCOUNT, N=22, KEY='hsinke707_shirt_v2';
+const UNIT=432, DISCOUNT=45, BASE=UNIT-DISCOUNT, N=22, KEY='hsinke707_shirt_v2';
 const SIZES=['4','6','8','10','XXS','XS','S','M','L','XL','2XL','3XL','4XL','5XL','其他'];
 const OFFICIAL={'4':{chest:32.5,length:43},'6':{chest:35.5,length:46},'8':{chest:38,length:48},'10':{chest:40.5,length:51},'XXS':{chest:43,length:59.5},'XS':{chest:44.5,length:62},'S':{chest:48,length:63.5},'M':{chest:51,length:66},'L':{chest:53.5,length:68.5},'XL':{chest:56,length:71},'2XL':{chest:58.5,length:74},'3XL':{chest:61,length:75},'4XL':{chest:63.5,length:76},'5XL':{chest:66,length:77}};
 const LEGACY_SIZE_MAP={'2L':'2XL','3L':'3XL','4L':'4XL','5L':'5XL'};
