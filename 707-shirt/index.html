@@ -20,7 +20,7 @@
 
 <section id="summary" class="tab"><div class="card"><h2>總覽</h2><div class="kpis"><div class="kpi"><small>學生基本件</small><b id="mBase">$0</b></div><div class="kpi"><small>家庭額外加購</small><b id="mExtra">$0</b></div><div class="kpi"><small>老師 2 件</small><b id="mTeacher">$0</b></div><div class="kpi"><small>全部合計</small><b id="mTotal">$0</b></div></div></div><div class="card"><h2>尺寸件數</h2><div class="tablewrap"><table><thead><tr><th>尺寸</th><th>學生基本</th><th>家庭加購</th><th>老師</th><th>合計</th></tr></thead><tbody id="sizeBody"></tbody></table></div></div><div class="card"><h2>每位學生家庭應收</h2><div class="tablewrap"><table><thead><tr><th>座號</th><th>姓名</th><th>基本件</th><th>加購件</th><th>應收</th></tr></thead><tbody id="moneyBody"></tbody></table></div></div></section>
 
-<section id="reference" class="tab"><div class="card"><h2>廠商官方尺寸｜台製 XN 快乾圓領短 T</h2><div class="note good">胸寬為成衣平放單面寬度；廠商標示尺寸誤差 ±5% 為正常範圍。</div><div class="tablewrap" style="margin-top:10px"><table><thead><tr><th>尺寸</th><th>胸寬 cm</th><th>衣長 cm</th></tr></thead><tbody id="officialBody"></tbody></table></div></div><div class="card"><h2>班內匿名實穿</h2><div class="note warn">只有真的填入身高、體重、尺寸後才會形成樣本，不自行猜測。</div><div class="tablewrap" style="margin-top:10px"><table><thead><tr><th>尺寸</th><th>樣本數</th><th>身高範圍</th><th>體重範圍</th><th>穿著感</th></tr></thead><tbody id="refBody"></tbody></table></div></div><div class="card"><h2>導師 / 家人實購參考</h2><div class="note">可以放妳自己的成人尺寸、先生、小孩等真實實購資料。這一區只有妳主動填的內容才會進家長參考表。</div><div id="referencePeople"></div><button class="btn secondary" onclick="addReferencePerson()">＋ 新增實購參考</button></div><div class="card"><h2>給家長的尺寸參考表</h2><div class="note good">不必先發網址。可直接預覽、複製成 BAND 文字，或下載成 PNG 圖卡貼到班群。</div><div class="toolbar"><button class="btn green" onclick="openReferencePreview()">預覽 / 列印參考表</button><button class="btn secondary" onclick="copyReferenceText()">複製 BAND 文字版</button><button class="btn secondary" onclick="downloadReferencePNG()">下載 PNG 圖卡</button></div></div></section>
+<section id="reference" class="tab"><div class="card"><h2>廠商官方尺寸｜台製 XN 快乾圓領短 T</h2><div class="note good">胸寬為成衣平放單面寬度；廠商標示尺寸誤差 ±5% 為正常範圍。</div><div class="tablewrap" style="margin-top:10px"><table><thead><tr><th>尺寸</th><th>胸寬 cm</th><th>衣長 cm</th></tr></thead><tbody id="officialBody"></tbody></table></div></div><div class="card"><h2>班內匿名實穿</h2><div class="note warn">只有真的填入身高、體重、尺寸後才會形成樣本，不自行猜測。</div><div class="tablewrap" style="margin-top:10px"><table><thead><tr><th>尺寸</th><th>樣本數</th><th>身高範圍</th><th>體重範圍</th><th>穿著感</th></tr></thead><tbody id="refBody"></tbody></table></div></div><div class="card"><h2>給家長的尺寸參考表</h2><div class="note good">這張給家長的版本只放廠商官方尺寸與班內匿名實穿彙整，不放導師或家人的身高、體重等個人資料。可直接預覽、複製 BAND 文字或下載 PNG 圖卡。</div><div class="toolbar"><button class="btn green" onclick="openReferencePreview()">預覽 / 列印參考表</button><button class="btn secondary" onclick="copyReferenceText()">複製 BAND 文字版</button><button class="btn secondary" onclick="downloadReferencePNG()">下載 PNG 圖卡</button></div></div></section>
 
 <section id="share" class="tab"><div class="card"><h2>家長訂購確認</h2><div class="note good">家長最需要的是「孩子與家人各訂什麼、幾件、怎麼算、總共多少」。所以這裡改成先複製清楚的文字摘要；網址只留作需要時的查詢頁，不顯示一大串字。</div></div><div class="card"><h2>各家庭</h2><div class="tablewrap"><table><thead><tr><th>座號</th><th>姓名</th><th>目前訂購</th><th>應收</th><th>操作</th></tr></thead><tbody id="parentLinkBody"></tbody></table></div></div></section>
 
@@ -71,5 +71,42 @@ $('csvFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f
 function exportJSON(){download('707班服完整備份.json',JSON.stringify(state,null,2),'application/json')}$('jsonFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{const x=JSON.parse(await f.text());if(!x.students)throw 0;state=x;state.references=state.references||[];render();alert('備份已匯入。')}catch{alert('不是有效的班服備份檔。')}})
 function csvEsc(v){v=String(v??'');return /[",\n]/.test(v)?`"${v.replace(/"/g,'""')}"`:v}function exportCSV(){const rows=[['類型','座號','姓名或稱呼','關係','尺寸','合身度','件數','單價','折扣','小計']];state.students.forEach(s=>{rows.push(['學生基本',s.no,s.name,'學生本人',s.size,s.fit,1,UNIT,DISCOUNT,BASE]);s.extras.forEach(e=>rows.push(['家庭加購',s.no,e.label||s.name,e.relation,e.size,e.fit,e.qty,UNIT,0,(+e.qty||0)*UNIT]))});state.teachers.forEach(e=>rows.push(['老師加購','',e.label,'老師',e.size,e.fit,e.qty,UNIT,0,(+e.qty||0)*UNIT]));download('707班服訂購明細.csv','\uFEFF'+rows.map(r=>r.map(csvEsc).join(',')).join('\n'),'text/csv;charset=utf-8')}
 document.querySelectorAll('.tabbtn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabbtn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.tab).classList.add('active')});render();
+
+/* PRIVACY_REFERENCE_V2 */
+function publicRefGroups(){return aggregate().map(g=>({...g,showRange:g.n>=2}))}
+function referenceText(){
+  const lines=['【707 班服尺寸參考】','廠商官方尺寸｜台製 XN 快乾圓領短 T','胸寬為成衣平放單面寬度；尺寸誤差 ±5% 為廠商標示正常範圍。',''];
+  SIZES.filter(s=>OFFICIAL[s]).forEach(s=>{const o=OFFICIAL[s];lines.push(`${s}｜胸寬 ${o.chest} cm｜衣長 ${o.length} cm`)});
+  const a=publicRefGroups();
+  if(a.length){lines.push('','【707 班內實穿（匿名）】');a.forEach(g=>{const fit=Object.entries(g.fits||{}).map(([k,v])=>`${k} ${v}`).join('、')||'未填';lines.push(g.showRange?`${g.size}｜${g.n} 人｜身高 ${g.hmin}–${g.hmax} cm｜體重 ${g.wmin}–${g.wmax} kg｜${fit}`:`${g.size}｜${g.n} 人｜樣本不足，暫不公開身高體重範圍｜${fit}`)})}
+  lines.push('','＊班內資料只是實際量套經驗，不是廠商官方身高體重建議；最後仍以實際套穿為準。');
+  return lines.join('\n')
+}
+function copyReferenceText(){copyText(referenceText())}
+function referenceHTML(){
+  const a=publicRefGroups();
+  const official=SIZES.filter(s=>OFFICIAL[s]).map(s=>`<tr><td><b>${s}</b></td><td>${OFFICIAL[s].chest}</td><td>${OFFICIAL[s].length}</td></tr>`).join('');
+  const samples=a.length?a.map(g=>{const fit=Object.entries(g.fits||{}).map(([k,v])=>`${k} ${v}`).join('、')||'未填';return `<tr><td><b>${g.size}</b></td><td>${g.n}</td><td>${g.showRange?`${g.hmin}–${g.hmax} cm`:'樣本不足，暫不公開'}</td><td>${g.showRange?`${g.wmin}–${g.wmax} kg`:'樣本不足，暫不公開'}</td><td>${fit}</td></tr>`}).join(''):'<tr><td colspan="5">尚未累積完整樣本</td></tr>';
+  return `<!doctype html><meta charset="utf-8"><title>707 班服尺寸參考</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif;color:#203047;max-width:900px;margin:30px auto;padding:0 18px}h1,h2{color:#143a6d}table{border-collapse:collapse;width:100%;margin:8px 0 22px}th,td{border:1px solid #d8e3ef;padding:8px;text-align:left}th{background:#eef4fb}.note{padding:10px;background:#f3f8fd;border-left:4px solid #6e9dcd}@media print{button{display:none}}</style><h1>707 班服尺寸參考</h1><div class="note">家镵版只放廠商官方尺寸與班內匿名實穿彙整，不放導師或家人的身高、體重。</div><h2>廠商官方尺寸</h2><table><tr><th>尺寸</th><th>胸寬 cm</th><th>衣長 cm</th></tr>${official}</table><h2>707 班內實穿（匿名）</h2><table><tr><th>尺寸</th><th>樣本</th><th>身高</th><th>體重</th><th>穿著感</th></tr>${samples}</table><div class="note">身形、肩寬與穿衣習慣都會影響感受，最後仍以實際套穿為準。</div><p><button onclick="print()">列印 / 另存 PDF</button></p>`
+}
+function openReferencePreview(){const w=window.open('','_blank');w.document.write(referenceHTML());w.document.close()}
+function downloadReferencePNG(){
+  const official=SIZES.filter(s=>OFFICIAL[s]),a=publicRefGroups(),W=1200,row=48,head=52;
+  const H=190+head+official.length*row+95+head+Math.max(a.length,1)*row+125;
+  const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  x.fillStyle='#f5f8fc';x.fillRect(0,0,W,H);x.fillStyle='#143a6d';x.fillRect(0,0,W,125);
+  x.fillStyle='#fff';x.font='700 42px sans-serif';x.fillText('707 班服尺寸參考',55,62);x.font='23px sans-serif';x.fillText('廠商官方尺寸＋班內匿名實穿｜不含導師或家人個人身高體重',55,100);
+  let y=170;
+  function title(t){x.fillStyle='#143a6d';x.font='700 29px sans-serif';x.fillText(t,55,y);y+=40}
+  function header(cols,widths){x.fillStyle='#dfeaf6';x.fillRect(55,y,W-110,head);x.fillStyle='#244b78';x.font='700 21px sans-serif';let xx=70;cols.forEach((v,i)=>{x.fillText(v,xx,y+34);xx+=widths[i]});y+=head}
+  function line(vals,widths,shade){x.fillStyle=shade?'#fbfdff':'#fff';x.fillRect(55,y,W-110,row);x.strokeStyle='#d8e3ef';x.strokeRect(55,y,W-110,row);x.fillStyle='#203047';x.font='20px sans-serif';let xx=70;vals.forEach((v,i)=>{x.fillText(String(v),xx,y+32);xx+=widths[i]});y+=row}
+  title('廠商官方尺寸｜台製 XN 快乾圓領短 T');const ow=[300,360,360];header(['尺寸','胸寬 cm','衣長 cm'],ow);
+  official.forEach((s,i)=>line([s,OFFICIAL[s].chest,OFFICIAL[s].length],ow,i%2===1));
+  y+=55;title('707 班內實穿（匿名）');const sw=[170,140,270,270,260];header(['尺寸','樣本','身高範圍','體重範圍','穿著感'],sw);
+  if(a.length)a.forEach((g,i)=>{const fit=Object.entries(g.fits||{}).map(([k,v])=>`${k}${v}`).join('、')||'未填';line([g.size,g.n,g.showRange?`${g.hmin}–${g.hmax}`:'樣本不足',g.showRange?`${g.wmin}–${g.wmax}`:'樣本不足',fit],sw,i%2===1)});else line(['—','—','尚未累積完整樣本','—','—'],sw,false);
+  y+=45;x.fillStyle='#5c6d80';x.font='19px sans-serif';x.fillText('＊班內資料只是實際量套經驗，不是官方身高體重建議；最後仍以實際套穿為準。',55,y);
+  c.toBlob(blob=>{const u=URL.createObjectURL(blob),el=document.createElement('a');el.href=u;el.download='707班服尺寸參考.png';el.click();setTimeout(()=>URL.revokeObjectURL(u),1000)},'image/png')
+}
+
 </script>
 </body></html>
