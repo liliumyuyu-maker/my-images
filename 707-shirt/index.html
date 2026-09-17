@@ -33,7 +33,7 @@
 const UNIT=432,DISCOUNT=45,BASE=387,N=22,KEY='hsinke707_shirt_v2';
 const SIZES=['4','6','8','10','XXS','XS','S','M','L','XL','2XL','3XL','4XL','5XL','其他'];
 const OFFICIAL={'4':{chest:32.5,length:43},'6':{chest:35.5,length:46},'8':{chest:38,length:48},'10':{chest:40.5,length:51},'XXS':{chest:43,length:59.5},'XS':{chest:44.5,length:62},'S':{chest:48,length:63.5},'M':{chest:51,length:66},'L':{chest:53.5,length:68.5},'XL':{chest:56,length:71},'2XL':{chest:58.5,length:74},'3XL':{chest:61,length:75},'4XL':{chest:63.5,length:76},'5XL':{chest:66,length:77}};
-const FITS=['','合身','寬鬆'],RELS=['本人加購','爸爸','媽媽','弟弟','妹妹','其他家人'],REFCATS=['成人','國中生','兒童','幼兒','其他'];
+const FITS=['','合身','寬鬆'],RELS=['本人加購','爸爸','媽媽','哥哥','姊姊','弟弟','妹妹','其他家人'],REFCATS=['成人','國中生','兒童','幼兒','其他'];
 const $=id=>document.getElementById(id),uid=()=>Math.random().toString(36).slice(2)+Date.now().toString(36),money=n=>'$'+Math.round(+n||0).toLocaleString('zh-TW');
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 function blankStudent(i){return{no:String(i).padStart(2,'0'),name:'',height:'',weight:'',size:'',fit:'',extras:[]}}
