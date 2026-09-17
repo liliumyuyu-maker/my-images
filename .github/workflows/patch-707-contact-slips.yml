@@ -24,6 +24,8 @@ jobs:
         run: python .github/scripts/add_707_teacher_family_rows.py
       - name: Avoid full student-list rerenders while editing
         run: python .github/scripts/fix_707_student_card_updates.py
+      - name: Fix persistence before rendering
+        run: python .github/scripts/fix_707_persistence.py
       - name: Apply emergency syntax hotfix if needed
         run: python .github/scripts/fix_707_syntax.py
       - name: Verify page JavaScript parses
@@ -40,7 +42,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add 707-shirt/index.html
-          git diff --cached --quiet || git commit -m "fix: keep student card stable while editing orders"
+          git diff --cached --quiet || git commit -m "fix: persist 707 orders before rendering"
           git push
       - uses: actions/configure-pages@v5
         with:
