@@ -20,6 +20,8 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - name: Add flexible teacher and family order rows
+        run: python .github/scripts/add_707_teacher_family_rows.py
       - name: Apply emergency syntax hotfix if needed
         run: python .github/scripts/fix_707_syntax.py
       - name: Verify page JavaScript parses
@@ -31,12 +33,12 @@ jobs:
           Path('/tmp/707-tool.js').write_text(js, encoding='utf-8')
           PY
           node --check /tmp/707-tool.js
-      - name: Commit hotfix if needed
+      - name: Commit verified update if needed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add 707-shirt/index.html
-          git diff --cached --quiet || git commit -m "fix: restore 707 tool interactivity"
+          git diff --cached --quiet || git commit -m "feat: allow flexible teacher family shirt orders"
           git push
       - uses: actions/configure-pages@v5
         with:
