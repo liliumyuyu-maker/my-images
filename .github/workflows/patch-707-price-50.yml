@@ -1,0 +1,65 @@
+name: Patch 707 price for 50-piece tier
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-707-price-50.yml'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-707-price-50
+  cancel-in-progress: true
+
+jobs:
+  patch-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update 707 prices
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          files = [Path('707-shirt/index.html'), Path('707-shirt/parent.html')]
+          for p in files:
+              s = p.read_text(encoding='utf-8')
+              before = s
+              s = s.replace('452', '432').replace('407', '387')
+              if p.name == 'index.html':
+                  s = s.replace('優惠門檻已達', '50 件優惠價已達')
+              if s == before:
+                  raise SystemExit(f'No price strings changed in {p}')
+              p.write_text(s, encoding='utf-8')
+
+          # Guardrails: no old 452/407 price text should remain in the 707-specific pages.
+          for p in files:
+              s = p.read_text(encoding='utf-8')
+              assert '452' not in s, f'old 452 remains in {p}'
+              assert '407' not in s, f'old 407 remains in {p}'
+          assert 'const UNIT=432, DISCOUNT=45, BASE=UNIT-DISCOUNT' in Path('707-shirt/index.html').read_text(encoding='utf-8')
+          assert '387 元' in Path('707-shirt/index.html').read_text(encoding='utf-8')
+          assert '432 元' in Path('707-shirt/parent.html').read_text(encoding='utf-8')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add 707-shirt/index.html 707-shirt/parent.html
+          git commit -m "fix: apply 50-piece price tier for 707"
+          git push
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./707-shirt
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
