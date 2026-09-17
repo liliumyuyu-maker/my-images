@@ -1,0 +1,70 @@
+name: Patch 707 Shirt Tool v4
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-707-shirt-v4.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch admin page
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('707-shirt/index.html')
+          s=p.read_text(encoding='utf-8')
+
+          s=s.replace("家長分享網址只帶匿名統計，不含姓名、座號或個別身高體重。","家長專屬網址只看得到「自己孩子的訂購與金額」＋「廠商官方尺寸表」＋「全班匿名尺寸參考」。")
+          s=s.replace('<button class="tabbtn" data-tab="share">家長分享</button>','<button class="tabbtn" data-tab="share">家長專屬網址</button>')
+
+          old_sizes='''<section id="sizes" class="tab">\n<div class="card">\n<h2>班內匿名實穿參考</h2>'''
+          new_sizes='''<section id="sizes" class="tab">\n<div class="card">\n<h2>廠商官方尺寸表｜台製 XN 快乾圓領短 T</h2>\n<div class="note good">以下為廠商提供的成衣平放尺寸，單位為公分。胸寬是衣服「平放」後的單面寬度，不是身體胸圍。廠商註明尺寸 ±5% 為正常範圍，並提醒請將衣服放在平面處平量。</div>\n<div class="tablewrap" style="margin-top:10px"><table><thead><tr><th>尺寸</th><th>胸寬 cm</th><th>衣長 cm</th></tr></thead><tbody id="officialBody"></tbody></table></div>\n<div class="note warn" style="margin-top:10px">童版 4／6／8／10 與成人 XXS 之間衣長跳幅較大（10：51 cm；XXS：59.5 cm），不要把它們當成完全等距的連續尺碼。</div>\n</div>\n<div class="card">\n<h2>班內匿名實穿參考</h2>'''
+          assert old_sizes in s
+          s=s.replace(old_sizes,new_sizes,1)
+
+          a=s.index('<section id="share" class="tab">')
+          b=s.index('<section id="backup" class="tab">')
+          share='''<section id="share" class="tab">\n<div class="card">\n<h2>家長會收到什麼？</h2>\n<div class="note good">每位學生都能產生一條「家長專屬網址」。家長打開後只會看到：<br>1. 自己孩子目前訂了幾件、各件尺寸、家庭合計金額。<br>2. 廠商官方胸寬／衣長表。<br>3. 全班匿名尺寸參考。<br>家長看不到其他學生資料，也看不到全班收款明細。</div>\n<div class="sharebox" style="margin-top:12px">\n<button class="btn green" onclick="makeAllParentLinks()">產生 / 更新全部家長專屬網址</button>\n<code id="generalParentUrl">（可選）尚未產生全班匿名尺寸參考網址</code>\n<div class="toolbar"><button class="btn secondary" onclick="copyGeneralLink()">複製全班匿名尺寸網址</button><button class="btn secondary" onclick="openGeneralLink()">預覽全班匿名尺寸頁</button></div>\n<small>下方表格則是每位學生各自的家長網址。量套資料更新後，重新按一次產生即可。</small>\n</div>\n</div>\n<div class="card">\n<h2>各家庭家長專屬網址</h2>\n<div class="tablewrap"><table><thead><tr><th>座號</th><th>姓名</th><th>目前家庭摘要</th><th>應收金額</th><th>家長網址</th><th>操作</th></tr></thead><tbody id="parentLinkBody"></tbody></table></div>\n</div>\n</section>\n\n'''
+          s=s[:a]+share+s[b:]
+
+          old="const SIZES=['XS','S','M','L','XL','2L','3L','4L','5L','其他'];"
+          new="const SIZES=['4','6','8','10','XXS','XS','S','M','L','XL','2XL','3XL','4XL','5XL','其他'];\nconst OFFICIAL={'4':{chest:32.5,length:43},'6':{chest:35.5,length:46},'8':{chest:38,length:48},'10':{chest:40.5,length:51},'XXS':{chest:43,length:59.5},'XS':{chest:44.5,length:62},'S':{chest:48,length:63.5},'M':{chest:51,length:66},'L':{chest:53.5,length:68.5},'XL':{chest:56,length:71},'2XL':{chest:58.5,length:74},'3XL':{chest:61,length:75},'4XL':{chest:63.5,length:76},'5XL':{chest:66,length:77}};\nconst LEGACY_SIZE_MAP={'2L':'2XL','3L':'3XL','4L':'4XL','5L':'5XL'};"
+          assert old in s
+          s=s.replace(old,new,1)
+
+          old="let state=load();while(state.students.length<N)state.students.push(blankStudent(state.students.length+1));state.students=state.students.slice(0,N);"
+          new="let state=load();while(state.students.length<N)state.students.push(blankStudent(state.students.length+1));state.students=state.students.slice(0,N);function migrateSize(v){return LEGACY_SIZE_MAP[v]||v}state.students.forEach(s=>{s.size=migrateSize(s.size);(s.extras||[]).forEach(e=>e.size=migrateSize(e.size))});(state.teachers||[]).forEach(e=>e.size=migrateSize(e.size));"
+          assert old in s
+          s=s.replace(old,new,1)
+
+          old='function render(){renderStudents();renderTeachers();renderStats();renderSummary();renderRefs();save()}'
+          new='function render(){renderStudents();renderTeachers();renderStats();renderSummary();renderOfficial();renderRefs();renderParentLinks();save()}'
+          assert old in s
+          s=s.replace(old,new,1)
+
+          old='function renderRefs(){const a=aggregate();'
+          new="function renderOfficial(){officialBody.innerHTML=SIZES.filter(x=>OFFICIAL[x]).map(x=>`<tr><td><b>${x}</b></td><td>${OFFICIAL[x].chest}</td><td>${OFFICIAL[x].length}</td></tr>`).join('')}\nfunction renderRefs(){const a=aggregate();"
+          assert old in s
+          s=s.replace(old,new,1)
+
+          start=s.index('function makeParentLink(){')
+          end=s.index('function csvEsc',start)
+          js='''function parentBaseUrl(){return location.href.replace(/index\\.html.*$/,'parent.html').replace(/[?#].*$/,'')}\nfunction buildGeneralPayload(){return {v:3,updated:new Date().toISOString(),unit:UNIT,base:BASE,discount:DISCOUNT,official:OFFICIAL,sizeOrder:SIZES.filter(x=>OFFICIAL[x]),groups:aggregate()}}\nfunction familySummaryText(s){const bits=[`學生基本 1 件${s.size?`（${s.size}）`:''}`];s.extras.forEach(e=>bits.push(`${e.relation||'加購'} ${e.qty||1} 件${e.size?`（${e.size}）`:''}`));return bits.join('、')}\nfunction buildStudentPayload(s){const lines=[{type:'學生基本件',relation:'學生本人',size:s.size||'',fit:s.fit||'',qty:1,unitPrice:BASE,subtotal:BASE}];s.extras.forEach(e=>lines.push({type:'家庭 / 本人加購',relation:e.relation||'加購',size:e.size||'',fit:e.fit||'',qty:+e.qty||1,unitPrice:UNIT,subtotal:(+e.qty||1)*UNIT,label:e.label||''}));return {...buildGeneralPayload(),family:{studentNo:s.no||'',studentName:s.name||'',lines,total:studentTotal(s)}}}\nfunction makeParentLinkForStudent(s){return parentBaseUrl()+'#d='+b64u(buildStudentPayload(s))}\nfunction makeGeneralParentLink(){return parentBaseUrl()+'#d='+b64u(buildGeneralPayload())}\nfunction makeAllParentLinks(){const u=makeGeneralParentLink();generalParentUrl.textContent=u;generalParentUrl.dataset.url=u;renderParentLinks();alert('已更新家長專屬網址。')}\nfunction renderParentLinks(){if(!document.getElementById('parentLinkBody'))return;const u=generalParentUrl.dataset.url||makeGeneralParentLink();generalParentUrl.textContent=u;generalParentUrl.dataset.url=u;parentLinkBody.innerHTML=state.students.map(s=>{const url=makeParentLinkForStudent(s);return `<tr><td>${esc(s.no)}</td><td>${esc(s.name||'')}</td><td>${esc(familySummaryText(s))}</td><td><b>${money(studentTotal(s))}</b></td><td><div style=\"word-break:break-all;max-width:360px;font-size:11px\">${esc(url)}</div></td><td><div class=\"toolbar\" style=\"margin:0\"><button class=\"btn secondary\" onclick='copyText(${JSON.stringify(url)})'>複製</button><button class=\"btn secondary\" onclick='window.open(${JSON.stringify(url)},\"_blank\")'>預覽</button></div></td></tr>`}).join('')}\nasync function copyText(t){try{await navigator.clipboard.writeText(t);alert('已複製。')}catch{prompt('請長按複製：',t)}}\nfunction copyGeneralLink(){copyText(generalParentUrl.dataset.url||makeGeneralParentLink())}\nfunction openGeneralLink(){window.open(generalParentUrl.dataset.url||makeGeneralParentLink(),'_blank')}\n'''
+          s=s[:start]+js+s[end:]
+
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add 707-shirt/index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: add official sizes and family-specific parent links"
+          git push
