@@ -19,25 +19,20 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
           p=Path('707-shirt/tool/index.html')
           s=p.read_text(encoding='utf-8')
-
           preset_button='<div class="toolbar"><button class="btn secondary" type="button" onclick="fillYoushirtPresetOnboarding()">套用同款預設｜有點色・台製 XN 快乾圓領短 T</button></div><div class="note warn">只有訂購「同一款台製 XN 快乾圓領短 T」才使用這份預設；同一家廠商的其他衣款尺寸可能不同。</div>'
-          target='<label style="display:block;margin-top:10px"><span>廠商尺寸表（每行：尺寸,胸寬,衣長；也可只填尺寸）</span><textarea id="obSizes" placeholder="例如：\\nS,48,63.5\\nM,51,66\\nL,53.5,68.5"></textarea></label>'
-          assert target in s
-          s=s.replace(target,target+preset_button,1)
-
+          pat=r'(<label style="display:block;margin-top:10px"><span>廠商尺寸表（每行：尺寸,胸寬,衣長；也可只填尺寸）</span><textarea id="obSizes".*?</textarea></label>)'
+          s,n=re.subn(pat,lambda m:m.group(1)+preset_button,s,count=1,flags=re.S)
+          assert n==1
           old='<div class="toolbar"><button class="btn secondary" onclick="replaceSizesFromPaste()">用貼上的內容更新尺寸表</button><button class="btn secondary" onclick="addSize()">＋ 新增尺寸</button></div>'
           new='<div class="toolbar"><button class="btn secondary" type="button" onclick="applyYoushirtPresetSettings()">套用同款預設｜有點色・台製 XN 快乾圓領短 T</button><button class="btn secondary" onclick="replaceSizesFromPaste()">用貼上的內容更新尺寸表</button><button class="btn secondary" onclick="addSize()">＋ 新增尺寸</button></div><div class="note warn">預設只適用於同一款「台製 XN 快乾圓領短 T」。若廠商提供的是其他版型，請改用該款尺寸表。</div>'
           assert old in s
           s=s.replace(old,new,1)
-
           marker='function finishSetup(){'
           assert marker in s
-          js="""const YOUSHIRT_XN_PRESET=`4,32.5,43\n6,35.5,46\n8,38,48\n10,40.5,51\nXXS,43,59.5\nXS,44.5,62\nS,48,63.5\nM,51,66\nL,53.5,68.5\nXL,56,71\n2XL,58.5,74\n3XL,61,75\n4XL,63.5,76\n5XL,66,77`;
-function fillYoushirtPresetOnboarding(){obSizes.value=YOUSHIRT_XN_PRESET;alert('已帶入「有點色・台製 XN 快乾圓領短 T」尺寸表。請確認你訂的是同一款衣服。')}
-function applyYoushirtPresetSettings(){if(!confirm('要用「有點色・台製 XN 快乾圓領短 T」尺寸表取代目前尺寸表嗎？\\n\\n同一家廠商若是不同衣款，請不要套用。'))return;sizePaste.value=YOUSHIRT_XN_PRESET;state.sizes=parseSizes(YOUSHIRT_XN_PRESET);render();alert('尺寸表已更新為同款預設。')}
-"""
+          js="const YOUSHIRT_XN_PRESET=`4,32.5,43\\n6,35.5,46\\n8,38,48\\n10,40.5,51\\nXXS,43,59.5\\nXS,44.5,62\\nS,48,63.5\\nM,51,66\\nL,53.5,68.5\\nXL,56,71\\n2XL,58.5,74\\n3XL,61,75\\n4XL,63.5,76\\n5XL,66,77`;function fillYoushirtPresetOnboarding(){obSizes.value=YOUSHIRT_XN_PRESET;alert('已帶入「有點色・台製 XN 快乾圓領短 T」尺寸表。請確認你訂的是同一款衣服。')}function applyYoushirtPresetSettings(){if(!confirm('要用「有點色・台製 XN 快乾圓領短 T」尺寸表取代目前尺寸表嗎？\\n\\n同一家廠商若是不同衣款，請不要套用。'))return;sizePaste.value=YOUSHIRT_XN_PRESET;state.sizes=parseSizes(YOUSHIRT_XN_PRESET);render();alert('尺寸表已更新為同款預設。')}"
           s=s.replace(marker,js+marker,1)
           p.write_text(s,encoding='utf-8')
           PY
