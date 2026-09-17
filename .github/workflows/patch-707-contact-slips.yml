@@ -1,4 +1,4 @@
-name: Patch 707 contact slips
+name: Emergency fix 707 shirt tool
 
 on:
   push:
@@ -13,21 +13,21 @@ permissions:
   id-token: write
 
 jobs:
-  patch-and-deploy:
+  fix-and-deploy:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Patch 707 tool
-        run: python .github/scripts/patch_707_contact.py
-      - name: Commit patched tool
+      - name: Fix broken JavaScript markers
+        run: python .github/scripts/fix_707_syntax.py
+      - name: Commit hotfix
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add 707-shirt/index.html
-          git diff --cached --quiet || git commit -m "feat: add contact-book confirmation slips and privacy-safe size refs"
+          git diff --cached --quiet || git commit -m "fix: restore 707 tool interactivity"
           git push
       - uses: actions/configure-pages@v5
         with:
