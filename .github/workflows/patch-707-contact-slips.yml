@@ -1,4 +1,4 @@
-name: Emergency fix 707 shirt tool
+name: Verify and deploy 707 shirt tool
 
 on:
   push:
@@ -13,16 +13,25 @@ permissions:
   id-token: write
 
 jobs:
-  fix-and-deploy:
+  verify-and-deploy:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Fix broken JavaScript markers
+      - name: Apply emergency syntax hotfix if needed
         run: python .github/scripts/fix_707_syntax.py
-      - name: Commit hotfix
+      - name: Verify page JavaScript parses
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          html = Path('707-shirt/index.html').read_text(encoding='utf-8')
+          js = html.split('<script>',1)[1].rsplit('</script>',1)[0]
+          Path('/tmp/707-tool.js').write_text(js, encoding='utf-8')
+          PY
+          node --check /tmp/707-tool.js
+      - name: Commit hotfix if needed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
