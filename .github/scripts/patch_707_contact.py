@@ -1,0 +1,65 @@
+from pathlib import Path
+
+p = Path("707-shirt/index.html")
+t = p.read_text(encoding="utf-8")
+
+def between(text, start, end, repl):
+    a = text.index(start)
+    b = text.index(end, a)
+    return text[:a] + repl + text[b:]
+
+old_nav = '<button class="tabbtn" data-tab="share">家長確認</button><button class="tabbtn" data-tab="backup">備份 / 匯入</button>'
+new_nav = '<button class="tabbtn" data-tab="share">家長確認</button><button class="tabbtn" data-tab="printslips">聯絡簿確認單</button><button class="tabbtn" data-tab="backup">備份 / 匯入</button>'
+if old_nav in t:
+    t = t.replace(old_nav, new_nav, 1)
+
+old_ref_card = '<div class="card"><h2>導師 / 家人實購參考</h2><div class="note">可以放妳自己的成人尺寸、先生、小孩等真實實購資料。這一區只有妳主動填的內容才會進家長參考表。</div><div id="referencePeople"></div><button class="btn secondary" onclick="addReferencePerson()">＋ 新增實購參考</button></div>'
+new_ref_card = '<div class="card"><h2>匿名實購補充</h2><div class="note">只記「類型＋實購尺寸＋穿著感／備註」，不記姓名、身高或體重。可以例如填「成人版 M」「幼兒版 6 號」，避免透露任何個人身形資料。</div><div id="referencePeople"></div><button class="btn secondary" onclick="addReferencePerson()">＋ 新增匿名實購參考</button></div>'
+if old_ref_card in t:
+    t = t.replace(old_ref_card, new_ref_card, 1)
+
+if 'id="printslips"' not in t:
+    print_section = '''<section id="printslips" class="tab"><div class="card"><h2>聯絡簿確認單</h2><div class="note good">最後尺寸與金額都確認後，可以直接全選 22 人，排成 A4 每頁 4 張的小確認單，裁切後貼進聯絡簿。每張只放該生家庭的尺寸、件數、計算與應付總額，並留家長勾選與簽名欄。</div><div class="toolbar"><button class="btn secondary" onclick="selectAllSlips(true)">全選</button><button class="btn secondary" onclick="selectAllSlips(false)">全不選</button><button class="btn green" onclick="printAllSlips()">一鍵列印全班</button><button class="btn" onclick="printSelectedSlips()">列印勾選學生</button><span id="slipCount" class="badge" style="align-self:center"></span></div><div class="tablewrap"><table><thead><tr><th>選取</th><th>座號</th><th>姓名</th><th>訂購摘要</th><th>應收</th></tr></thead><tbody id="printListBody"></tbody></table></div></div></section>
+
+'''
+    t = t.replace('<section id="backup" class="tab">', print_section + '<section id="backup" class="tab">', 1)
+
+t = t.replace(
+    "x.references=x.references||[];x.students.forEach(s=>{s.extras=s.extras||[]});return x}",
+    "x.references=(x.references||[]).map(r=>({id:r.id||uid(),category:r.category||'',size:r.size||'',fit:r.fit||'',note:r.note||''}));x.students.forEach(s=>{s.extras=s.extras||[]});return x}"
+)
+t = t.replace('let state=load();function save(){', 'let state=load();let slipSelected=new Set(state.students.map((_,i)=>i));function save(){')
+t = t.replace(
+    'function render(){renderStudents();renderTeachers();renderStats();renderSummary();renderOfficial();renderAnonymous();renderReferencePeople();renderFamilyRows();save()}',
+    'function render(){renderStudents();renderTeachers();renderStats();renderSummary();renderOfficial();renderAnonymous();renderReferencePeople();renderFamilyRows();renderPrintList();save()}'
+)
+
+ref_funcs = r'''function renderReferencePeople(){$('referencePeople').innerHTML=state.references.map((r,i)=>`<div class="refrow"><div class="grid"><label><span>類型</span><select onchange="state.references[${i}].category=this.value;render()">${opts(REFCATS,r.category)}</select></label><label><span>實購尺寸</span><select onchange="state.references[${i}].size=this.value;render()">${opts(SIZES,r.size)}</select></label><label><span>穿著感</span><select onchange="state.references[${i}].fit=this.value;render()">${opts(FITS,r.fit)}</select></label><label class="wide"><span>備註（可空白）</span><input value="${esc(r.note||'')}" placeholder="例如：想穿久一點所以選大一號" onchange="state.references[${i}].note=this.value;render()"></label><button class="btn red" style="align-self:end" onclick="state.references.splice(${i},1);render()">刪除</button></div></div>`).join('')||'<div class="small">尚未新增匿名實購參考。</div>'}
+function addReferencePerson(){state.references.push({id:uid(),category:'',size:'',fit:'',note:''});render()}
+'''
+if 'function renderReferencePeople()' in t:
+    t = between(t, 'function renderReferencePeople()', 'function familyLines(', ref_funcs + 'function familyLines(')
+
+family_block = r'''function renderFamilyRows(){$('parentLinkBody').innerHTML=state.students.map((s,i)=>`<tr><td>${esc(s.no)}</td><td>${esc(s.name)}</td><td><div class="share-summary">${esc(familySummary(s))}<br><b>${esc(familyFormula(s))} 元</b></div></td><td><b>${money(studentTotal(s))}</b></td><td><div class="actions"><button class="btn green" onclick="copyText(parentMessage(state.students[${i}]))">複製家長訊息</button><button class="btn secondary" onclick="window.open(parentUrl(state.students[${i}]),'_blank')">預覽</button><button class="btn secondary" onclick="copyText(parentUrl(state.students[${i}]))">複製查詢連結</button></div></td></tr>`).join('')}
+function renderPrintList(){if(!$('printListBody'))return;$('printListBody').innerHTML=state.students.map((s,i)=>`<tr><td><input type="checkbox" style="width:22px;height:22px" ${slipSelected.has(i)?'checked':''} onchange="toggleSlip(${i},this.checked)"></td><td>${esc(s.no)}</td><td>${esc(s.name||'')}</td><td>${esc(familySummary(s))}</td><td><b>${money(studentTotal(s))}</b></td></tr>`).join('');updateSlipCount()}
+function updateSlipCount(){if($('slipCount'))$('slipCount').textContent=`已選 ${slipSelected.size} / ${state.students.length} 人`}
+function toggleSlip(i,on){on?slipSelected.add(i):slipSelected.delete(i);updateSlipCount()}
+function selectAllSlips(on){slipSelected=new Set(on?state.students.map((_,i)=>i):[]);renderPrintList()}
+function slipCard(s){const rows=familyLines(s).map(x=>`<tr><td>${esc(x.who+(x.label?'（'+x.label+'）':''))}</td><td><b>${esc(x.size)}</b></td><td>${x.qty}</td><td>${x.who==='孩子'?'432−45＝387':(x.qty>1?`432×${x.qty}＝${432*x.qty}`:'432')}</td></tr>`).join('');return `<div class="slip"><div class="slip-title">707 班服訂購確認</div><div class="student-line">座號 ${esc(s.no)}　<b>${esc(s.name||'＿＿＿＿')}</b></div><table><tr><th>對象</th><th>尺寸</th><th>件數</th><th>金額</th></tr>${rows}</table><div class="calc">計算：${esc(familyFormula(s))} 元</div><div class="slip-total">應付合計：${studentTotal(s)} 元</div><div class="confirm">□ 以上尺寸、件數與金額確認無誤<br>□ 需要修改：＿＿＿＿＿＿＿＿＿＿＿＿</div><div class="sign">家長簽名：＿＿＿＿＿＿＿＿　日期：＿＿／＿＿</div><div class="fine">學生第一件 387 元；第二件起及家人加購 432 元／件。</div></div>`}
+function slipsDocument(students){const pages=[];for(let i=0;i<students.length;i+=4){pages.push(`<div class="page">${students.slice(i,i+4).map(slipCard).join('')}</div>`)}return `<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><title>707 班服聯絡簿確認單</title><style>@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif;color:#111}.toolbar{padding:8px 0;text-align:center}.page{width:194mm;height:281mm;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:4mm;break-after:page;page-break-after:always}.page:last-child{break-after:auto;page-break-after:auto}.slip{border:1px dashed #777;padding:5mm;overflow:hidden}.slip-title{font-size:16pt;font-weight:800;margin-bottom:2mm}.student-line{font-size:12pt;margin-bottom:2mm}.slip table{width:100%;border-collapse:collapse;font-size:10.5pt}.slip th,.slip td{border:1px solid #bbb;padding:2mm 1.5mm;text-align:left}.slip th{background:#f2f2f2}.calc{margin-top:2.5mm;font-size:10.5pt}.slip-total{font-size:13pt;font-weight:800;margin-top:1mm}.confirm{font-size:10.5pt;line-height:1.7;margin-top:3mm}.sign{font-size:10.5pt;margin-top:3mm}.fine{font-size:8.5pt;color:#555;margin-top:2mm}.printbtn{padding:8px 14px;font-size:16px}@media print{.toolbar{display:none}}</style></head><body><div class="toolbar"><button class="printbtn" onclick="print()">列印</button>　A4 每頁 4 張，沿虛線裁切後貼聯絡簿</div>${pages.join('')}</body></html>`}
+function printSelectedSlips(){const list=state.students.filter((_,i)=>slipSelected.has(i));if(!list.length){alert('請至少勾選一位學生。');return}const w=window.open('','_blank');w.document.write(slipsDocument(list));w.document.close()}
+function printAllSlips(){selectAllSlips(true);printSelectedSlips()}
+'''
+if 'function renderFamilyRows()' in t:
+    t = between(t, 'function renderFamilyRows()', 'async function copyText', family_block + 'async function copyText')
+
+ref_block = r'''function referenceText(){let t='【707 班服尺寸參考】\n廠商款式：台製 XN 快乾圓領短 T\n\n官方平量（胸寬/衣長 cm）：\n';Object.entries(OFFICIAL).forEach(([s,v])=>t+=`${s}：${v.chest}/${v.length}\n`);const a=aggregate();if(a.length){t+='\n707 班內實穿（匿名）：\n';a.forEach(x=>t+=`${x.size}：${x.n} 人，身高 ${x.hmin}–${x.hmax} cm、體重 ${x.wmin}–${x.wmax} kg，${Object.entries(x.fits).map(([k,v])=>`${k}${v}`).join('、')}\n`)}const refs=state.references.filter(r=>r.size);if(refs.length){t+='\n匿名實購補充：\n';refs.forEach(r=>t+=`${r.category||'實購'}：${r.size}${r.fit?`（${r.fit}）`:''}${r.note?`；${r.note}`:''}\n`)}t+='\n提醒：身形與穿著習慣不同，最後仍以實際套穿為準。';return t}
+function copyReferenceText(){copyText(referenceText())}
+function referenceHTML(){const a=aggregate(),refs=state.references.filter(r=>r.size);return `<!doctype html><meta charset="utf-8"><title>707 班服尺寸參考</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif;color:#203047;max-width:900px;margin:30px auto;padding:0 18px}h1,h2{color:#143a6d}table{border-collapse:collapse;width:100%;margin:8px 0 22px}th,td{border:1px solid #d8e3ef;padding:8px;text-align:left}th{background:#eef4fb}.note{padding:10px;background:#f3f8fd;border-left:4px solid #6e9dcd}@media print{button{display:none}}</style><h1>707 班服尺寸參考</h1><div class="note">台製 XN 快乾圓領短 T｜胸寬為成衣平放單面寬度，尺寸誤差 ±5% 為廠商標示正常範圍。</div><h2>廠商官方尺寸</h2><table><tr><th>尺寸</th><th>胸寬 cm</th><th>衣長 cm</th></tr>${Object.entries(OFFICIAL).map(([s,v])=>`<tr><td>${s}</td><td>${v.chest}</td><td>${v.length}</td></tr>`).join('')}</table><h2>707 班內實穿（匿名）</h2><table><tr><th>尺寸</th><th>樣本</th><th>身高</th><th>體重</th><th>穿著感</th></tr>${a.length?a.map(x=>`<tr><td>${x.size}</td><td>${x.n}</td><td>${x.hmin}–${x.hmax}</td><td>${x.wmin}–${x.wmax}</td><td>${Object.entries(x.fits).map(([k,v])=>`${k} ${v}`).join('、')}</td></tr>`).join(''):'<tr><td colspan="5">尚未累積完整樣本</td></tr>'}</table>${refs.length?`<h2>匿名實購補充</h2><table><tr><th>類型</th><th>尺寸</th><th>穿著感 / 備註</th></tr>${refs.map(r=>`<tr><td>${esc(r.category||'實購')}</td><td>${r.size}</td><td>${esc((r.fit||'')+(r.note?'；'+r.note:''))}</td></tr>`).join('')}</table>`:''}<div class="note">身形、肩寬與穿衣習慣都會影響感受，最後仍以實際套穿為準。</div><p><button onclick="print()">列印 / 另存 PDF</button></p>`}
+function openReferencePreview(){const w=window.open('','_blank');w.document.write(referenceHTML());w.document.close()}
+function downloadReferencePNG(){const anon=aggregate(),refs=state.references.filter(r=>r.size),entries=Object.entries(OFFICIAL),W=1400,row=46,H=260+(entries.length+1)*row+110+(Math.max(anon.length,1)+1)*row+110+(refs.length?(refs.length+1)*row+110:0)+130,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);x.fillStyle='#143a6d';x.font='bold 44px sans-serif';x.fillText('707 班服尺寸參考',60,70);x.font='24px sans-serif';x.fillStyle='#425a73';x.fillText('台製 XN 快乾圓領短 T｜胸寬為成衣平放單面寬度',60,110);let y=160;function title(t){x.fillStyle='#143a6d';x.font='bold 30px sans-serif';x.fillText(t,60,y);y+=42}function line(cols,widths,bold=false){x.font=(bold?'bold ':'')+'22px sans-serif';let xx=60;cols.forEach((v,i)=>{x.fillStyle=bold?'#143a6d':'#203047';x.fillText(String(v),xx,y);xx+=widths[i]});y+=row}title('廠商官方尺寸');line(['尺寸','胸寬 cm','衣長 cm'],[220,260,260],true);entries.forEach(([s,v])=>line([s,v.chest,v.length],[220,260,260]));y+=20;title('707 班內實穿（匿名）');line(['尺寸','樣本','身高範圍','體重範圍','穿著感'],[120,120,280,280,420],true);if(anon.length)anon.forEach(z=>line([z.size,`${z.n}人`,`${z.hmin}–${z.hmax} cm`,`${z.wmin}–${z.wmax} kg`,Object.entries(z.fits).map(([k,v])=>`${k}${v}`).join('、')],[120,120,280,280,420]));else line(['尚未累積完整樣本'],[1000]);if(refs.length){y+=20;title('匿名實購補充');line(['類型','尺寸','穿著感 / 備註'],[220,160,760],true);refs.forEach(r=>line([r.category||'實購',r.size,(r.fit||'')+(r.note?`；${r.note}`:'')],[220,160,760]))}y+=35;x.fillStyle='#5c6d80';x.font='20px sans-serif';x.fillText('提醒：身形、肩寬與穿衣習慣不同，最後仍以實際套穿為準。',60,y);c.toBlob(blob=>{const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='707班服尺寸參考.png';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)},'image/png')}
+'''
+if 'function referenceText()' in t:
+    t = between(t, 'function referenceText()', 'function parseDelimited(', ref_block + 'function parseDelimited(')
+
+p.write_text(t, encoding="utf-8")
