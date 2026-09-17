@@ -1,0 +1,65 @@
+name: Add missing sibling options to 707 shirt tool
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-707-sibling-options.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  patch-verify-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add only 哥哥 and 姊姊 to relationship options
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('707-shirt/index.html')
+          t = p.read_text(encoding='utf-8')
+          old = "const FITS=['','合身','寬鬆'],RELS=['本人加購','爸爸','媽媽','弟弟','妹妹','其他家人'],REFCATS=['成人','國中生','兒童','幼兒','其他'];"
+          new = "const FITS=['','合身','寬鬆'],RELS=['本人加購','爸爸','媽媽','哥哥','姊姊','弟弟','妹妹','其他家人'],REFCATS=['成人','國中生','兒童','幼兒','其他'];"
+          if t.count(old) != 1:
+              raise SystemExit('Expected relationship-options line was not found exactly once; refusing to modify anything.')
+          t2 = t.replace(old, new, 1)
+          if "KEY='hsinke707_shirt_v2'" not in t2:
+              raise SystemExit('Storage key guard failed; refusing to write.')
+          p.write_text(t2, encoding='utf-8')
+          print('Only relationship options changed: added 哥哥 and 姊姊.')
+          PY
+      - name: Verify JavaScript parses
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          html = Path('707-shirt/index.html').read_text(encoding='utf-8')
+          js = html.split('<script>',1)[1].rsplit('</script>',1)[0]
+          Path('/tmp/707-tool.js').write_text(js, encoding='utf-8')
+          PY
+          node --check /tmp/707-tool.js
+      - name: Verify diff is limited to relationship options
+        run: |
+          git diff -- 707-shirt/index.html
+          test "$(git diff --numstat -- 707-shirt/index.html | awk '{print $1+$2}')" = "2"
+          git diff -- 707-shirt/index.html | grep -q "哥哥.*姊姊"
+      - name: Commit only the relationship-option change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add 707-shirt/index.html
+          git commit -m "fix: add older sibling relationship options"
+          git push
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./707-shirt
+      - id: deployment
+        uses: actions/deploy-pages@v4
