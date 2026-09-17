@@ -1,0 +1,116 @@
+name: Patch 707 size reference privacy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-707-reference-privacy.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fix size reference image and remove personal reference fields
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path('707-shirt/index.html')
+          s=p.read_text(encoding='utf-8')
+
+          # Remove the card that encouraged entering teacher/family height and weight.
+          s, n = re.subn(
+              r'<div class="card"><h2>導師 / 家人實購參考</h2>.*?＋ 新增實購參考</button></div>',
+              '',
+              s,
+              count=1,
+              flags=re.S,
+          )
+          if n != 1:
+              raise SystemExit('privacy card not found')
+
+          s=s.replace(
+              '不必先發網址。可直接預覽、複製成 BAND 文字，或下載成 PNG 圖卡貼到班群。',
+              '這張給家長的版本只放廠商官方尺寸與班內匿名實穿彙整，不放導師或家人的身高、體重等個人資料。可直接預覽、複製 BAND 文字或下載 PNG 圖卡。',
+              1,
+          )
+
+          marker='/* PRIVACY_REFERENCE_V2 */'
+          if marker in s:
+              raise SystemExit('already patched')
+
+          override=r'''
+/* PRIVACY_REFERENCE_V2 */
+function publicRefGroups(){
+  return aggregate().map(g=>({...g,showRange:g.n>=2}));
+}
+function referenceTextV2(){
+  const lines=['【707 班服尺寸參考】','廠商官方尺寸｜台製 XN 快乾圓領短 T','胸寬為成衣平放單面寬度；尺寸誤差 ±5% 為廠商標示正常範圍。',''];
+  SIZES.filter(x=>OFFICIAL[x]).forEach(x=>{const o=OFFICIAL[x];lines.push(`${x}｜胸寬 ${o.chest} cm｜衣長 ${o.length} cm`)});
+  const gs=publicRefGroups();
+  if(gs.length){
+    lines.push('','【707 班內匿名實穿】');
+    gs.forEach(g=>{
+      const fit=Object.entries(g.fits||{}).map(([k,v])=>`${k} ${v}`).join('、')||'未填';
+      if(g.showRange) lines.push(`${g.size}｜${g.n} 人｜身高 ${g.hmin}–${g.hmax} cm｜體重 ${g.wmin}–${g.wmax} kg｜${fit}`);
+      else lines.push(`${g.size}｜${g.n} 人｜樣本不足，暫不公開身高體重範圍｜${fit}`);
+    });
+  }
+  lines.push('','＊班內資料只是實際量套經驗，不是廠商官方身高體重建議；最後仍以實際套穿為準。');
+  return lines.join('\n');
+}
+async function copyReferenceText(){
+  const t=referenceTextV2();
+  try{await navigator.clipboard.writeText(t);alert('已複製家長版尺寸參考文字。')}catch(e){prompt('請長按複製：',t)}
+}
+function openReferencePreview(){
+  const gs=publicRefGroups();
+  const officialRows=SIZES.filter(x=>OFFICIAL[x]).map(x=>`<tr><td><b>${x}</b></td><td>${OFFICIAL[x].chest}</td><td>${OFFICIAL[x].length}</td></tr>`).join('');
+  const sampleRows=gs.length?gs.map(g=>{const fit=Object.entries(g.fits||{}).map(([k,v])=>`${k} ${v}`).join('、')||'未填';return `<tr><td><b>${g.size}</b></td><td>${g.n}</td><td>${g.showRange?`${g.hmin}–${g.hmax} cm`:'樣本不足，暫不公開'}</td><td>${g.showRange?`${g.wmin}–${g.wmax} kg`:'樣本不足，暫不公開'}</td><td>${fit}</td></tr>`}).join(''):'<tr><td colspan="5">尚未累積完整量套資料。</td></tr>';
+  const w=window.open('','_blank');
+  w.document.write(`<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>707 班服尺寸參考</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif;color:#203047;margin:24px;max-width:900px}h1,h2{color:#143a6d}table{border-collapse:collapse;width:100%;margin:12px 0 24px}th,td{border:1px solid #d8e3ef;padding:9px;text-align:left}th{background:#eef4fb}.note{background:#f3f8fd;padding:12px;border-radius:10px;line-height:1.6}@media print{button{display:none}}</style><h1>707 班服尺寸參考</h1><div class="note">家長版只放廠商官方尺寸與匿名實穿彙整，不放導師或家人的個人身高體重。</div><h2>廠商官方尺寸｜台製 XN 快乾圓領短 T</h2><table><thead><tr><th>尺寸</th><th>胸寬 cm</th><th>衣長 cm</th></tr></thead><tbody>${officialRows}</tbody></table><h2>707 班內匿名實穿</h2><table><thead><tr><th>尺寸</th><th>樣本</th><th>身高範圍</th><th>體重範圍</th><th>穿著感</th></tr></thead><tbody>${sampleRows}</tbody></table><div class="note">班內資料只是實際量套經驗，不是廠商官方身高體重建議；最後仍以實際套穿為準。</div><p><button onclick="print()">列印 / 儲存 PDF</button></p></html>`);
+  w.document.close();
+}
+function downloadReferencePNG(){
+  const officialRows=SIZES.filter(x=>OFFICIAL[x]);
+  const gs=publicRefGroups();
+  const W=1200, top=170, rowH=50, tableHead=54, gap=80;
+  const officialH=tableHead+officialRows.length*rowH;
+  const sampleCount=Math.max(gs.length,1);
+  const sampleH=tableHead+sampleCount*rowH;
+  const H=top+officialH+gap+sampleH+150;
+  const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  x.fillStyle='#f5f8fc';x.fillRect(0,0,W,H);
+  x.fillStyle='#143a6d';x.fillRect(0,0,W,125);
+  x.fillStyle='#fff';x.font='700 42px -apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif';x.fillText('707 班服尺寸參考',55,62);
+  x.font='24px -apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif';x.fillText('廠商官方尺寸＋班內匿名實穿｜不含導師或家人個人身高體重',55,101);
+  let y=top;
+  function title(t){x.fillStyle='#143a6d';x.font='700 30px -apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif';x.fillText(t,55,y);y+=18;}
+  function gridHeader(cols,widths){y+=18;x.fillStyle='#dfeaf6';x.fillRect(55,y,W-110,tableHead);x.fillStyle='#244b78';x.font='700 22px -apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif';let xx=70;cols.forEach((t,i)=>{x.fillText(t,xx,y+35);xx+=widths[i]});y+=tableHead;}
+  function gridRow(vals,widths,shade){x.fillStyle=shade?'#fbfdff':'#fff';x.fillRect(55,y,W-110,rowH);x.strokeStyle='#d8e3ef';x.strokeRect(55,y,W-110,rowH);x.fillStyle='#203047';x.font='21px -apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif';let xx=70;vals.forEach((t,i)=>{x.fillText(String(t),xx,y+33);xx+=widths[i]});y+=rowH;}
+  title('廠商官方尺寸｜台製 XN 快乾圓領短 T');
+  const ow=[260,360,360];gridHeader(['尺寸','胸寬 cm','衣長 cm'],ow);
+  officialRows.forEach((sz,i)=>gridRow([sz,OFFICIAL[sz].chest,OFFICIAL[sz].length],ow,i%2===1));
+  y+=gap-18;
+  title('707 班內匿名實穿');
+  const sw=[180,160,285,285,180];gridHeader(['尺寸','樣本','身高範圍','體重範圍','穿著感'],sw);
+  if(gs.length){gs.forEach((g,i)=>{const fit=Object.entries(g.fits||{}).map(([k,v])=>`${k}${v}`).join('、')||'未填';gridRow([g.size,g.n,g.showRange?`${g.hmin}–${g.hmax}`:'樣本不足',g.showRange?`${g.wmin}–${g.wmax}`:'樣本不足',fit],sw,i%2===1)})}
+  else gridRow(['—','—','尚未累積完整量套資料','—','—'],sw,false);
+  y+=48;x.fillStyle='#5f6f82';x.font='20px -apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif';x.fillText('＊班內資料是實際量套經驗，不是官方身高體重建議；最後仍以實際套穿為準。',55,y);
+  const a=document.createElement('a');a.download='707班服尺寸參考.png';a.href=c.toDataURL('image/png');a.click();
+}
+'''
+          s=s.replace('</script>', override+'\n</script>', 1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add 707-shirt/index.html
+          git commit -m "fix: privacy-safe size reference and complete official chart"
+          git push
