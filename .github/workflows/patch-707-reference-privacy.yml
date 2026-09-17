@@ -19,93 +19,26 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
-
+          import re, base64
           p=Path('707-shirt/index.html')
           s=p.read_text(encoding='utf-8')
-
-          # Remove the card that encouraged entering teacher/family height and weight.
-          s, n = re.subn(
+          s,n=re.subn(
               r'<div class="card"><h2>導師 / 家人實購參考</h2>.*?＋ 新增實購參考</button></div>',
               '',
               s,
               count=1,
-              flags=re.S,
+              flags=re.S
           )
           if n != 1:
               raise SystemExit('privacy card not found')
-
           s=s.replace(
               '不必先發網址。可直接預覽、複製成 BAND 文字，或下載成 PNG 圖卡貼到班群。',
               '這張給家長的版本只放廠商官方尺寸與班內匿名實穿彙整，不放導師或家人的身高、體重等個人資料。可直接預覽、複製 BAND 文字或下載 PNG 圖卡。',
-              1,
+              1
           )
-
-          marker='/* PRIVACY_REFERENCE_V2 */'
-          if marker in s:
+          if '/* PRIVACY_REFERENCE_V2 */' in s:
               raise SystemExit('already patched')
-
-          override=r'''
-/* PRIVACY_REFERENCE_V2 */
-function publicRefGroups(){
-  return aggregate().map(g=>({...g,showRange:g.n>=2}));
-}
-function referenceTextV2(){
-  const lines=['【707 班服尺寸參考】','廠商官方尺寸｜台製 XN 快乾圓領短 T','胸寬為成衣平放單面寬度；尺寸誤差 ±5% 為廠商標示正常範圍。',''];
-  SIZES.filter(x=>OFFICIAL[x]).forEach(x=>{const o=OFFICIAL[x];lines.push(`${x}｜胸寬 ${o.chest} cm｜衣長 ${o.length} cm`)});
-  const gs=publicRefGroups();
-  if(gs.length){
-    lines.push('','【707 班內匿名實穿】');
-    gs.forEach(g=>{
-      const fit=Object.entries(g.fits||{}).map(([k,v])=>`${k} ${v}`).join('、')||'未填';
-      if(g.showRange) lines.push(`${g.size}｜${g.n} 人｜身高 ${g.hmin}–${g.hmax} cm｜體重 ${g.wmin}–${g.wmax} kg｜${fit}`);
-      else lines.push(`${g.size}｜${g.n} 人｜樣本不足，暫不公開身高體重範圍｜${fit}`);
-    });
-  }
-  lines.push('','＊班內資料只是實際量套經驗，不是廠商官方身高體重建議；最後仍以實際套穿為準。');
-  return lines.join('\n');
-}
-async function copyReferenceText(){
-  const t=referenceTextV2();
-  try{await navigator.clipboard.writeText(t);alert('已複製家長版尺寸參考文字。')}catch(e){prompt('請長按複製：',t)}
-}
-function openReferencePreview(){
-  const gs=publicRefGroups();
-  const officialRows=SIZES.filter(x=>OFFICIAL[x]).map(x=>`<tr><td><b>${x}</b></td><td>${OFFICIAL[x].chest}</td><td>${OFFICIAL[x].length}</td></tr>`).join('');
-  const sampleRows=gs.length?gs.map(g=>{const fit=Object.entries(g.fits||{}).map(([k,v])=>`${k} ${v}`).join('、')||'未填';return `<tr><td><b>${g.size}</b></td><td>${g.n}</td><td>${g.showRange?`${g.hmin}–${g.hmax} cm`:'樣本不足，暫不公開'}</td><td>${g.showRange?`${g.wmin}–${g.wmax} kg`:'樣本不足，暫不公開'}</td><td>${fit}</td></tr>`}).join(''):'<tr><td colspan="5">尚未累積完整量套資料。</td></tr>';
-  const w=window.open('','_blank');
-  w.document.write(`<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>707 班服尺寸參考</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif;color:#203047;margin:24px;max-width:900px}h1,h2{color:#143a6d}table{border-collapse:collapse;width:100%;margin:12px 0 24px}th,td{border:1px solid #d8e3ef;padding:9px;text-align:left}th{background:#eef4fb}.note{background:#f3f8fd;padding:12px;border-radius:10px;line-height:1.6}@media print{button{display:none}}</style><h1>707 班服尺寸參考</h1><div class="note">家長版只放廠商官方尺寸與匿名實穿彙整，不放導師或家人的個人身高體重。</div><h2>廠商官方尺寸｜台製 XN 快乾圓領短 T</h2><table><thead><tr><th>尺寸</th><th>胸寬 cm</th><th>衣長 cm</th></tr></thead><tbody>${officialRows}</tbody></table><h2>707 班內匿名實穿</h2><table><thead><tr><th>尺寸</th><th>樣本</th><th>身高範圍</th><th>體重範圍</th><th>穿著感</th></tr></thead><tbody>${sampleRows}</tbody></table><div class="note">班內資料只是實際量套經驗，不是廠商官方身高體重建議；最後仍以實際套穿為準。</div><p><button onclick="print()">列印 / 儲存 PDF</button></p></html>`);
-  w.document.close();
-}
-function downloadReferencePNG(){
-  const officialRows=SIZES.filter(x=>OFFICIAL[x]);
-  const gs=publicRefGroups();
-  const W=1200, top=170, rowH=50, tableHead=54, gap=80;
-  const officialH=tableHead+officialRows.length*rowH;
-  const sampleCount=Math.max(gs.length,1);
-  const sampleH=tableHead+sampleCount*rowH;
-  const H=top+officialH+gap+sampleH+150;
-  const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
-  x.fillStyle='#f5f8fc';x.fillRect(0,0,W,H);
-  x.fillStyle='#143a6d';x.fillRect(0,0,W,125);
-  x.fillStyle='#fff';x.font='700 42px -apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif';x.fillText('707 班服尺寸參考',55,62);
-  x.font='24px -apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif';x.fillText('廠商官方尺寸＋班內匿名實穿｜不含導師或家人個人身高體重',55,101);
-  let y=top;
-  function title(t){x.fillStyle='#143a6d';x.font='700 30px -apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif';x.fillText(t,55,y);y+=18;}
-  function gridHeader(cols,widths){y+=18;x.fillStyle='#dfeaf6';x.fillRect(55,y,W-110,tableHead);x.fillStyle='#244b78';x.font='700 22px -apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif';let xx=70;cols.forEach((t,i)=>{x.fillText(t,xx,y+35);xx+=widths[i]});y+=tableHead;}
-  function gridRow(vals,widths,shade){x.fillStyle=shade?'#fbfdff':'#fff';x.fillRect(55,y,W-110,rowH);x.strokeStyle='#d8e3ef';x.strokeRect(55,y,W-110,rowH);x.fillStyle='#203047';x.font='21px -apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif';let xx=70;vals.forEach((t,i)=>{x.fillText(String(t),xx,y+33);xx+=widths[i]});y+=rowH;}
-  title('廠商官方尺寸｜台製 XN 快乾圓領短 T');
-  const ow=[260,360,360];gridHeader(['尺寸','胸寬 cm','衣長 cm'],ow);
-  officialRows.forEach((sz,i)=>gridRow([sz,OFFICIAL[sz].chest,OFFICIAL[sz].length],ow,i%2===1));
-  y+=gap-18;
-  title('707 班內匿名實穿');
-  const sw=[180,160,285,285,180];gridHeader(['尺寸','樣本','身高範圍','體重範圍','穿著感'],sw);
-  if(gs.length){gs.forEach((g,i)=>{const fit=Object.entries(g.fits||{}).map(([k,v])=>`${k}${v}`).join('、')||'未填';gridRow([g.size,g.n,g.showRange?`${g.hmin}–${g.hmax}`:'樣本不足',g.showRange?`${g.wmin}–${g.wmax}`:'樣本不足',fit],sw,i%2===1)})}
-  else gridRow(['—','—','尚未累積完整量套資料','—','—'],sw,false);
-  y+=48;x.fillStyle='#5f6f82';x.font='20px -apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif';x.fillText('＊班內資料是實際量套經驗，不是官方身高體重建議；最後仍以實際套穿為準。',55,y);
-  const a=document.createElement('a');a.download='707班服尺寸參考.png';a.href=c.toDataURL('image/png');a.click();
-}
-'''
+          override=base64.b64decode('Ci8qIFBSSVZBQ1lfUkVGRVJFTkNFX1YyICovCmZ1bmN0aW9uIHB1YmxpY1JlZkdyb3Vwcygpe3JldHVybiBhZ2dyZWdhdGUoKS5tYXAoZz0+KHsuLi5nLHNob3dSYW5nZTpnLm4+PTJ9KSl9CmZ1bmN0aW9uIHJlZmVyZW5jZVRleHQoKXsKICBjb25zdCBsaW5lcz1bJ+OAkDcwNyDnj63mnI3lsLrlr7jlj4PogIPjgJEnLCflu6DllYblrpjmlrnlsLrlr7jvvZzlj7Doo70gWE4g5b+r5Lm+5ZyT6aCY55+tIFQnLCfog7jlr6zngrrmiJDooaPlubPmlL7llq7pnaLlr6zluqbvvJvlsLrlr7joqqTlt64gwrE1JSDngrrlu6DllYbmqJnnpLrmraPluLjnr4TlnI3jgIInLCcnXTsKICBTSVpFUy5maWx0ZXIocz0+T0ZGSUNJQUxbc10pLmZvckVhY2gocz0+e2NvbnN0IG89T0ZGSUNJQUxbc107bGluZXMucHVzaChgJHtzfe+9nOiDuOWvrCAke28uY2hlc3R9IGNt772c6KGj6ZW3ICR7by5sZW5ndGh9IGNtYCl9KTsKICBjb25zdCBhPXB1YmxpY1JlZkdyb3VwcygpOwogIGlmKGEubGVuZ3RoKXtsaW5lcy5wdXNoKCcnLCfjgJA3MDcg54+t5YWn5a+m56m/77yI5Yy/5ZCN77yJ44CRJyk7YS5mb3JFYWNoKGc9Pntjb25zdCBmaXQ9T2JqZWN0LmVudHJpZXMoZy5maXRzfHx7fSkubWFwKChbayx2XSk9PmAke2t9ICR7dn1gKS5qb2luKCfjgIEnKXx8J+acquWhqyc7bGluZXMucHVzaChnLnNob3dSYW5nZT9gJHtnLnNpemV9772cJHtnLm59IOS6uu+9nOi6q+mrmCAke2cuaG1pbn3igJMke2cuaG1heH0gY23vvZzpq5Tph40gJHtnLndtaW594oCTJHtnLndtYXh9IGtn772cJHtmaXR9YDpgJHtnLnNpemV9772cJHtnLm59IOS6uu+9nOaoo+acrOS4jei2s++8jOaaq+S4jeWFrOmWi+i6q+mrmOmrlOmHjeevhOWcje+9nCR7Zml0fWApfSl9CiAgbGluZXMucHVzaCgnJywn77yK54+t5YWn6LOH5paZ5Y+q5piv5a+m6Zqb6YeP5aWX57aT6amX77yM5LiN5piv5bug5ZWG5a6Y5pa56Lqr6auY6auU6YeN5bu66K2w77yb5pyA5b6M5LuN5Lul5a+m6Zqb5aWX56m/54K65rqW44CCJyk7CiAgcmV0dXJuIGxpbmVzLmpvaW4oJ1xuJykKfQpmdW5jdGlvbiBjb3B5UmVmZXJlbmNlVGV4dCgpe2NvcHlUZXh0KHJlZmVyZW5jZVRleHQoKSl9CmZ1bmN0aW9uIHJlZmVyZW5jZUhUTUwoKXsKICBjb25zdCBhPXB1YmxpY1JlZkdyb3VwcygpOwogIGNvbnN0IG9mZmljaWFsPVNJWkVTLmZpbHRlcihzPT5PRkZJQ0lBTFtzXSkubWFwKHM9PmA8dHI+PHRkPjxiPiR7c308L2I+PC90ZD48dGQ+JHtPRkZJQ0lBTFtzXS5jaGVzdH08L3RkPjx0ZD4ke09GRklDSUFMW3NdLmxlbmd0aH08L3RkPjwvdHI+YCkuam9pbignJyk7CiAgY29uc3Qgc2FtcGxlcz1hLmxlbmd0aD9hLm1hcChnPT57Y29uc3QgZml0PU9iamVjdC5lbnRyaWVzKGcuZml0c3x8e30pLm1hcCgoW2ssdl0pPT5gJHtrfSAke3Z9YCkuam9pbign44CBJyl8fCfmnKrloasnO3JldHVybiBgPHRyPjx0ZD48Yj4ke2cuc2l6ZX08L2I+PC90ZD48dGQ+JHtnLm59PC90ZD48dGQ+JHtnLnNob3dSYW5nZT9gJHtnLmhtaW594oCTJHtnLmhtYXh9IGNtYDon5qij5pys5LiN6Laz77yM5pqr5LiN5YWs6ZaLJ308L3RkPjx0ZD4ke2cuc2hvd1JhbmdlP2Ake2cud21pbn3igJMke2cud21heH0ga2dgOifmqKPmnKzkuI3otrPvvIzmmqvkuI3lhazplosnfTwvdGQ+PHRkPiR7Zml0fTwvdGQ+PC90cj5gfSkuam9pbignJyk6Jzx0cj48dGQgY29sc3Bhbj0iNSI+5bCa5pyq57Sv56mN5a6M5pW05qij5pysPC90ZD48L3RyPic7CiAgcmV0dXJuIGA8IWRvY3R5cGUgaHRtbD48bWV0YSBjaGFyc2V0PSJ1dGYtOCI+PHRpdGxlPjcwNyDnj63mnI3lsLrlr7jlj4PogIM8L3RpdGxlPjxzdHlsZT5ib2R5e2ZvbnQtZmFtaWx5Oi1hcHBsZS1zeXN0ZW0sQmxpbmtNYWNTeXN0ZW1Gb250LCJQaW5nRmFuZyBUQyIsIk1pY3Jvc29mdCBKaGVuZ0hlaSIsc2Fucy1zZXJpZjtjb2xvcjojMjAzMDQ3O21heC13aWR0aDo5MDBweDttYXJnaW46MzBweCBhdXRvO3BhZGRpbmc6MCAxOHB4fWgxLGgye2NvbG9yOiMxNDNhNmR9dGFibGV7Ym9yZGVyLWNvbGxhcHNlOmNvbGxhcHNlO3dpZHRoOjEwMCU7bWFyZ2luOjhweCAwIDIycHh9dGgsdGR7Ym9yZGVyOjFweCBzb2xpZCAjZDhlM2VmO3BhZGRpbmc6OHB4O3RleHQtYWxpZ246bGVmdH10aHtiYWNrZ3JvdW5kOiNlZWY0ZmJ9Lm5vdGV7cGFkZGluZzoxMHB4O2JhY2tncm91bmQ6I2YzZjhmZDtib3JkZXItbGVmdDo0cHggc29saWQgIzZlOWRjZH1AbWVkaWEgcHJpbnR7YnV0dG9ue2Rpc3BsYXk6bm9uZX19PC9zdHlsZT48aDE+NzA3IOePreacjeWwuuWvuOWPg+iAgzwvaDE+PGRpdiBjbGFzcz0ibm90ZSI+5a626ZW154mI5Y+q5pS+5bug5ZWG5a6Y5pa55bC65a+46IiH54+t5YWn5Yy/5ZCN5a+m56m/5b2Z5pW077yM5LiN5pS+5bCO5bir5oiW5a625Lq655qE6Lqr6auY44CB6auU6YeN44CCPC9kaXY+PGgyPuW7oOWVhuWumOaWueWwuuWvuDwvaDI+PHRhYmxlPjx0cj48dGg+5bC65a+4PC90aD48dGg+6IO45a+sIGNtPC90aD48dGg+6KGj6ZW3IGNtPC90aD48L3RyPiR7b2ZmaWNpYWx9PC90YWJsZT48aDI+NzA3IOePreWFp+Wvpuepv++8iOWMv+WQje+8iTwvaDI+PHRhYmxlPjx0cj48dGg+5bC65a+4PC90aD48dGg+5qij5pysPC90aD48dGg+6Lqr6auYPC90aD48dGg+6auU6YeNPC90aD48dGg+56m/6JGX5oSfPC90aD48L3RyPiR7c2FtcGxlc308L3RhYmxlPjxkaXYgY2xhc3M9Im5vdGUiPui6q+W9ouOAgeiCqeWvrOiIh+epv+iho+e/kuaFo+mDveacg+W9semfv+aEn+WPl++8jOacgOW+jOS7jeS7peWvpumam+Wll+epv+eCuua6luOAgjwvZGl2PjxwPjxidXR0b24gb25jbGljaz0icHJpbnQoKSI+5YiX5Y2wIC8g5Y+m5a2YIFBERjwvYnV0dG9uPjwvcD5gCn0KZnVuY3Rpb24gb3BlblJlZmVyZW5jZVByZXZpZXcoKXtjb25zdCB3PXdpbmRvdy5vcGVuKCcnLCdfYmxhbmsnKTt3LmRvY3VtZW50LndyaXRlKHJlZmVyZW5jZUhUTUwoKSk7dy5kb2N1bWVudC5jbG9zZSgpfQpmdW5jdGlvbiBkb3dubG9hZFJlZmVyZW5jZVBORygpewogIGNvbnN0IG9mZmljaWFsPVNJWkVTLmZpbHRlcihzPT5PRkZJQ0lBTFtzXSksYT1wdWJsaWNSZWZHcm91cHMoKSxXPTEyMDAscm93PTQ4LGhlYWQ9NTI7CiAgY29uc3QgSD0xOTAraGVhZCtvZmZpY2lhbC5sZW5ndGgqcm93Kzk1K2hlYWQrTWF0aC5tYXgoYS5sZW5ndGgsMSkqcm93KzEyNTsKICBjb25zdCBjPWRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoJ2NhbnZhcycpO2Mud2lkdGg9VztjLmhlaWdodD1IO2NvbnN0IHg9Yy5nZXRDb250ZXh0KCcyZCcpOwogIHguZmlsbFN0eWxlPScjZjVmOGZjJzt4LmZpbGxSZWN0KDAsMCxXLEgpO3guZmlsbFN0eWxlPScjMTQzYTZkJzt4LmZpbGxSZWN0KDAsMCxXLDEyNSk7CiAgeC5maWxsU3R5bGU9JyNmZmYnO3guZm9udD0nNzAwIDQycHggc2Fucy1zZXJpZic7eC5maWxsVGV4dCgnNzA3IOePreacjeWwuuWvuOWPg+iAgycsNTUsNjIpO3guZm9udD0nMjNweCBzYW5zLXNlcmlmJzt4LmZpbGxUZXh0KCflu6DllYblrpjmlrnlsLrlr7jvvIvnj63lhafljL/lkI3lr6bnqb/vvZzkuI3lkKvlsI7luKvmiJblrrbkurrlgIvkurrouqvpq5jpq5Tph40nLDU1LDEwMCk7CiAgbGV0IHk9MTcwOwogIGZ1bmN0aW9uIHRpdGxlKHQpe3guZmlsbFN0eWxlPScjMTQzYTZkJzt4LmZvbnQ9JzcwMCAyOXB4IHNhbnMtc2VyaWYnO3guZmlsbFRleHQodCw1NSx5KTt5Kz00MH0KICBmdW5jdGlvbiBoZWFkZXIoY29scyx3aWR0aHMpe3guZmlsbFN0eWxlPScjZGZlYWY2Jzt4LmZpbGxSZWN0KDU1LHksVy0xMTAsaGVhZCk7eC5maWxsU3R5bGU9JyMyNDRiNzgnO3guZm9udD0nNzAwIDIxcHggc2Fucy1zZXJpZic7bGV0IHh4PTcwO2NvbHMuZm9yRWFjaCgodixpKT0+e3guZmlsbFRleHQodix4eCx5KzM0KTt4eCs9d2lkdGhzW2ldfSk7eSs9aGVhZH0KICBmdW5jdGlvbiBsaW5lKHZhbHMsd2lkdGhzLHNoYWRlKXt4LmZpbGxTdHlsZT1zaGFkZT8nI2ZiZmRmZic6JyNmZmYnO3guZmlsbFJlY3QoNTUseSxXLTExMCxyb3cpO3guc3Ryb2tlU3R5bGU9JyNkOGUzZWYnO3guc3Ryb2tlUmVjdCg1NSx5LFctMTEwLHJvdyk7eC5maWxsU3R5bGU9JyMyMDMwNDcnO3guZm9udD0nMjBweCBzYW5zLXNlcmlmJztsZXQgeHg9NzA7dmFscy5mb3JFYWNoKCh2LGkpPT57eC5maWxsVGV4dChTdHJpbmcodikseHgseSszMik7eHgrPXdpZHRoc1tpXX0pO3krPXJvd30KICB0aXRsZSgn5bug5ZWG5a6Y5pa55bC65a+4772c5Y+w6KO9IFhOIOW/q+S5vuWck+mgmOefrSBUJyk7Y29uc3Qgb3c9WzMwMCwzNjAsMzYwXTtoZWFkZXIoWyflsLrlr7gnLCfog7jlr6wgY20nLCfooaPplbcgY20nXSxvdyk7CiAgb2ZmaWNpYWwuZm9yRWFjaCgocyxpKT0+bGluZShbcyxPRkZJQ0lBTFtzXS5jaGVzdCxPRkZJQ0lBTFtzXS5sZW5ndGhdLG93LGklMj09PTEpKTsKICB5Kz01NTt0aXRsZSgnNzA3IOePreWFp+Wvpuepv++8iOWMv+WQje+8iScpO2NvbnN0IHN3PVsxNzAsMTQwLDI3MCwyNzAsMjYwXTtoZWFkZXIoWyflsLrlr7gnLCfmqKPmnKwnLCfouqvpq5jnr4TlnI0nLCfpq5Tph43nr4TlnI0nLCfnqb/okZfmhJ8nXSxzdyk7CiAgaWYoYS5sZW5ndGgpYS5mb3JFYWNoKChnLGkpPT57Y29uc3QgZml0PU9iamVjdC5lbnRyaWVzKGcuZml0c3x8e30pLm1hcCgoW2ssdl0pPT5gJHtrfSR7dn1gKS5qb2luKCfjgIEnKXx8J+acquWhqyc7bGluZShbZy5zaXplLGcubixnLnNob3dSYW5nZT9gJHtnLmhtaW594oCTJHtnLmhtYXh9YDon5qij5pys5LiN6LazJyxnLnNob3dSYW5nZT9gJHtnLndtaW594oCTJHtnLndtYXh9YDon5qij5pys5LiN6LazJyxmaXRdLHN3LGklMj09PTEpfSk7ZWxzZSBsaW5lKFsn4oCUJywn4oCUJywn5bCa5pyq57Sv56mN5a6M5pW05qij5pysJywn4oCUJywn4oCUJ10sc3csZmFsc2UpOwogIHkrPTQ1O3guZmlsbFN0eWxlPScjNWM2ZDgwJzt4LmZvbnQ9JzE5cHggc2Fucy1zZXJpZic7eC5maWxsVGV4dCgn77yK54+t5YWn6LOH5paZ5Y+q5piv5a+m6Zqb6YeP5aWX57aT6amX77yM5LiN5piv5a6Y5pa56Lqr6auY6auU6YeN5bu66K2w77yb5pyA5b6M5LuN5Lul5a+m6Zqb5aWX56m/54K65rqW44CCJyw1NSx5KTsKICBjLnRvQmxvYihibG9iPT57Y29uc3QgdT1VUkwuY3JlYXRlT2JqZWN0VVJMKGJsb2IpLGVsPWRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoJ2EnKTtlbC5ocmVmPXU7ZWwuZG93bmxvYWQ9JzcwN+ePreacjeWwuuWvuOWPg+iAgy5wbmcnO2VsLmNsaWNrKCk7c2V0VGltZW91dCgoKT0+VVJMLnJldm9rZU9iamVjdFVSTCh1KSwxMDAwKX0sJ2ltYWdlL3BuZycpCn0K').decode('utf-8')
           s=s.replace('</script>', override+'\n</script>', 1)
           p.write_text(s,encoding='utf-8')
           PY
