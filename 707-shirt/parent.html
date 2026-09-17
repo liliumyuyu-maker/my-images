@@ -4,133 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#143a6d">
-<title>707 班服｜家長專屬查詢</title>
+<title>707 班服訂購確認</title>
 <style>
 :root{--navy:#143a6d;--ink:#203047;--muted:#6a7789;--line:#d8e3ef;--bg:#f5f8fc;--green:#16745a}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif}
-.app{max-width:860px;margin:auto;padding:14px 14px 70px}
-.hero{padding:22px;border-radius:20px;color:#fff;background:linear-gradient(145deg,#0d2a50,#19548d 60%,#70a5d5)}
-h1{margin:0 0 6px;font-size:27px}.hero p{margin:0;opacity:.9}
-.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin:11px 0}
-.card h2{margin:0 0 10px;color:var(--navy);font-size:20px}
-.note{padding:10px 12px;border-left:4px solid #76a5d5;border-radius:9px;background:#f1f7fd;font-size:13px;line-height:1.55}
-.note.good{border-left-color:#68aa91;background:#f3fbf7}
-.note.warn{border-left-color:#e0a052;background:#fff8ed}
-label span{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
-input,select{width:100%;min-height:46px;border:1px solid #cbd8e7;border-radius:9px;padding:8px;font-size:16px;background:#fff}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.btn{border:0;border-radius:10px;min-height:46px;padding:9px 13px;background:var(--navy);color:#fff;font-weight:800;margin-top:10px}
-.result{padding:14px;border-radius:13px;background:#f5f9fe;border:1px solid #d6e3f1;margin-top:10px;min-height:80px}
-.result b{font-size:22px;color:var(--navy)}
-.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px}
-table{border-collapse:collapse;width:100%;min-width:620px} th,td{padding:9px;border-bottom:1px solid #e9eef5;text-align:left;font-size:13px;vertical-align:top}
-th{background:#eef4fb;color:#244b78}
-.updated{text-align:right;color:var(--muted);font-size:11px;margin-top:8px}
-.total{font-size:28px;font-weight:900;color:var(--navy)}
-.mini{font-size:12px;color:var(--muted)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif}.app{max-width:760px;margin:auto;padding:14px 14px 70px}.hero{padding:22px;border-radius:20px;color:#fff;background:linear-gradient(145deg,#0d2a50,#19548d 60%,#70a5d5)}h1{margin:0 0 6px;font-size:27px}.hero p{margin:0;opacity:.92;line-height:1.5}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin:11px 0}.card h2{margin:0 0 10px;color:var(--navy);font-size:20px}.note{padding:10px 12px;border-left:4px solid #76a5d5;border-radius:9px;background:#f1f7fd;font-size:13px;line-height:1.55}.note.good{border-left-color:#68aa91;background:#f3fbf7}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px}table{border-collapse:collapse;width:100%;min-width:560px}th,td{padding:10px;border-bottom:1px solid #e9eef5;text-align:left;font-size:14px;vertical-align:top}th{background:#eef4fb;color:#244b78}.totalbox{background:#eef6ff;border:1px solid #cfe0f1;border-radius:14px;padding:14px;margin-top:12px}.formula{font-size:15px;line-height:1.6}.total{font-size:32px;font-weight:900;color:var(--navy);margin-top:5px}.updated{text-align:right;color:var(--muted);font-size:11px;margin-top:8px}.empty{padding:20px;text-align:center;color:var(--muted)}
 </style>
 </head>
 <body>
 <div class="app">
-<section class="hero">
-  <h1>707 班服｜家長專屬查詢</h1>
-  <p>這個頁面只顯示您孩子家庭的訂購摘要，以及全班匿名尺寸參考。</p>
-</section>
-
-<div class="card">
-  <div class="note good">學生基本 1 件以 <b>387 元</b>計；之後本人加購與家人加購皆以 <b>432 元 / 件</b>計。</div>
-  <div class="updated" id="updated"></div>
-</div>
-
-<div class="card" id="familyCard">
-  <h2>您家目前登記</h2>
-  <div id="familyBox" class="note warn">目前尚未帶入專屬家長資料，請向老師索取正確網址。</div>
-  <div class="tablewrap" style="margin-top:10px">
-    <table>
-      <thead><tr><th>類型</th><th>對象</th><th>尺寸</th><th>件數</th><th>單價</th><th>小計</th></tr></thead>
-      <tbody id="familyBody"></tbody>
-    </table>
-  </div>
-  <div style="margin-top:12px">家庭合計：<span class="total" id="familyTotal">$0</span></div>
-</div>
-
-<div class="card">
-  <h2>廠商官方尺寸表｜台製 XN 快乾圓領短 T</h2>
-  <div class="note good">以下是廠商提供的成衣平放尺寸（公分）。胸寬是衣服平放後的單面寬度，不是身體胸圍；尺寸 ±5% 為廠商標示的正常範圍。</div>
-  <div class="tablewrap" style="margin-top:10px"><table>
-    <thead><tr><th>尺寸</th><th>胸寬 cm</th><th>衣長 cm</th></tr></thead>
-    <tbody id="officialBody"></tbody>
-  </table></div>
-  <div class="note warn" style="margin-top:10px">若不確定尺寸，最可靠的方法是拿一件目前穿起來舒服的 T 恤平放，量「胸寬」與「衣長」再對照。</div>
-</div>
-
-<div class="card">
-  <h2>輸入身高體重，找較接近的班內尺寸</h2>
-  <div class="grid">
-    <label><span>身高 cm</span><input id="h" type="number" inputmode="decimal"></label>
-    <label><span>體重 kg</span><input id="w" type="number" inputmode="decimal"></label>
-  </div>
-  <button class="btn" onclick="recommend()">找相近尺寸</button>
-  <div id="result" class="result">請先輸入身高與體重。</div>
-</div>
-
-<div class="card">
-  <h2>707 班內量套觀察（匿名）</h2>
-  <div class="tablewrap"><table>
-    <thead><tr><th>尺寸</th><th>樣本數</th><th>身高觀察範圍</th><th>體重觀察範圍</th><th>實穿感受</th></tr></thead>
-    <tbody id="body"></tbody>
-  </table></div>
-  <div class="note" style="margin-top:10px">這裡是全班匿名彙整資料，不會顯示其他學生姓名、座號或個別金額。</div>
-</div>
-
+<section class="hero"><h1>707 班服訂購確認</h1><p>這一頁只顯示您家目前的訂購尺寸、件數與金額計算。</p></section>
+<div class="card"><div id="who" class="note good"></div><div class="updated" id="updated"></div></div>
+<div class="card"><h2>訂購內容</h2><div class="tablewrap"><table><thead><tr><th>對象</th><th>尺寸</th><th>件數</th><th>單價</th><th>小計</th></tr></thead><tbody id="body"></tbody></table></div><div class="totalbox"><div class="formula" id="formula"></div><div>應付合計</div><div class="total" id="total">$0</div></div></div>
+<div class="card"><div class="note">若尺寸或件數需要調整，請直接回覆老師。尺寸參考表會由老師另外提供，不和個別訂購明細混在一起。</div></div>
 </div>
 <script>
-function dec(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return JSON.parse(decodeURIComponent(escape(atob(s))))}
-function money(n){return '$'+Math.round(+n||0).toLocaleString('zh-TW')}
-let data={groups:[],family:null,updated:'',official:{},sizeOrder:[]};
-try{const m=location.hash.match(/[#&]d=([^&]+)/); if(m)data=dec(m[1])}catch(e){}
-updated.textContent=data.updated?'資料更新：'+new Date(data.updated).toLocaleString('zh-TW'):'尚未帶入資料';
-const fallbackOfficial={'4':{chest:32.5,length:43},'6':{chest:35.5,length:46},'8':{chest:38,length:48},'10':{chest:40.5,length:51},'XXS':{chest:43,length:59.5},'XS':{chest:44.5,length:62},'S':{chest:48,length:63.5},'M':{chest:51,length:66},'L':{chest:53.5,length:68.5},'XL':{chest:56,length:71},'2XL':{chest:58.5,length:74},'3XL':{chest:61,length:75},'4XL':{chest:63.5,length:76},'5XL':{chest:66,length:77}};
-const official=(data.official&&Object.keys(data.official).length)?data.official:fallbackOfficial;
-const sizeOrder=(data.sizeOrder&&data.sizeOrder.length)?data.sizeOrder:Object.keys(fallbackOfficial);
-officialBody.innerHTML=sizeOrder.filter(s=>official[s]).map(s=>`<tr><td><b>${s}</b></td><td>${official[s].chest}</td><td>${official[s].length}</td></tr>`).join('');
-
-if(data.family){
-  const name = data.family.studentName || '未填姓名';
-  const no = data.family.studentNo || '';
-  familyBox.className='note good';
-  familyBox.innerHTML=`<b>${no?`座號 ${no} `:''}${name}</b> 的家庭訂購摘要如下。若您還想加購，請再與老師確認。`;
-  familyBody.innerHTML=(data.family.lines||[]).map(line=>`<tr>
-    <td>${line.type||''}</td>
-    <td>${line.relation||''}${line.label?`（${line.label}）`:''}</td>
-    <td>${line.size||''}${line.fit?` / ${line.fit}`:''}</td>
-    <td>${line.qty||1}</td>
-    <td>${money(line.unitPrice||0)}</td>
-    <td><b>${money(line.subtotal||0)}</b></td>
-  </tr>`).join('');
-  familyTotal.textContent=money(data.family.total||0);
-}else{
-  familyCard.style.display='none';
-}
-
-body.innerHTML=(data.groups&&data.groups.length)?data.groups.map(g=>`<tr>
-  <td><b>${g.size}</b></td>
-  <td>${g.n}</td>
-  <td>${g.hmin}–${g.hmax} cm</td>
-  <td>${g.wmin}–${g.wmax} kg</td>
-  <td>${Object.entries(g.fits||{}).map(([k,v])=>`${k} ${v}`).join('、')}</td>
-</tr>`).join(''):'<tr><td colspan="5">目前量套資料尚未累積完成，老師更新後會提供新網址。</td></tr>';
-
-function recommend(){
-  const H=+h.value,W=+w.value,r=document.getElementById('result');
-  if(!H||!W){r.textContent='請先輸入身高與體重。';return}
-  const gs=(data.groups||[]).filter(g=>g.n>0);
-  if(!gs.length){r.textContent='目前還沒有足夠班內量套資料。';return}
-  const ranked=gs.map(g=>({...g,d:Math.sqrt(Math.pow((H-g.havg)/5,2)+Math.pow((W-g.wavg)/5,2))})).sort((a,b)=>a.d-b.d);
-  const a=ranked[0],b=ranked[1];
-  r.innerHTML=`<b>較接近：${a.size}</b>${b?`<div style="margin-top:4px">次近：${b.size}</div>`:''}
-    <div style="margin-top:8px;font-size:13px;color:#667589">班內 ${a.size} 目前有 ${a.n} 筆完整樣本，觀察範圍為 ${a.hmin}–${a.hmax} cm、${a.wmin}–${a.wmax} kg。這是匿名班內經驗，不是官方尺寸建議。</div>`;
-}
+function dec(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return JSON.parse(decodeURIComponent(escape(atob(s))))}function money(n){return '$'+Math.round(+n||0).toLocaleString('zh-TW')}
+let data=null;try{const m=location.hash.match(/[#&]d=([^&]+)/);if(m)data=dec(m[1])}catch(e){}
+if(!data){document.querySelector('.app').innerHTML='<section class="hero"><h1>707 班服訂購確認</h1></section><div class="card empty">這個網址沒有帶入訂購資料，請向老師索取正確的查詢連結。</div>'}else{const name=data.studentName||'同學',no=data.studentNo||'';document.getElementById('who').innerHTML=`<b>${no?`座號 ${no}　`:''}${name}</b> 的家庭訂購如下。`;document.getElementById('updated').textContent=data.updated?'資料更新：'+new Date(data.updated).toLocaleString('zh-TW'):'';document.getElementById('body').innerHTML=(data.lines||[]).map(x=>`<tr><td>${x.who||''}${x.label?`（${x.label}）`:''}</td><td><b>${x.size||'尺寸待確認'}</b></td><td>${x.qty||1}</td><td>${x.who==='孩子'?'432−45＝387 元':money(x.price||0)}</td><td><b>${money((x.qty||1)*(x.price||0))}</b></td></tr>`).join('');document.getElementById('formula').textContent='計算：'+(data.formula||'');document.getElementById('total').textContent=money(data.total||0)}
 </script>
 </body></html>
