@@ -40,8 +40,8 @@ jobs:
           assert old in s
           s=s.replace(old,new,1)
 
-          old="let state=load();while(state.students.length<N)state.students.push(blankStudent(state.students.length+1));state.students=state.students.slice(0,N);"
-          new="let state=load();while(state.students.length<N)state.students.push(blankStudent(state.students.length+1));state.students=state.students.slice(0,N);function migrateSize(v){return LEGACY_SIZE_MAP[v]||v}state.students.forEach(s=>{s.size=migrateSize(s.size);(s.extras||[]).forEach(e=>e.size=migrateSize(e.size))});(state.teachers||[]).forEach(e=>e.size=migrateSize(e.size));"
+          old="let state=load(); while(state.students.length<N)state.students.push(blankStudent(state.students.length+1)); state.students=state.students.slice(0,N);"
+          new="let state=load(); while(state.students.length<N)state.students.push(blankStudent(state.students.length+1)); state.students=state.students.slice(0,N); function migrateSize(v){return LEGACY_SIZE_MAP[v]||v} state.students.forEach(s=>{s.size=migrateSize(s.size);(s.extras||[]).forEach(e=>e.size=migrateSize(e.size))}); (state.teachers||[]).forEach(e=>e.size=migrateSize(e.size));"
           assert old in s
           s=s.replace(old,new,1)
 
